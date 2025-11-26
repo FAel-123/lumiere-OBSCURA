@@ -171,7 +171,7 @@ const Carousel3D = ({ books, onSelect }) => {
 };
 
 // ============================================================================
-// --- SECTION 5: SETTINGS & SIDEBAR (FIXED TOGGLE) ---
+// --- SECTION 5: SETTINGS & SIDEBAR ---
 // ============================================================================
 
 const SettingsModal = ({ isOpen, onClose, securityEnabled, setSecurityEnabled }) => {
@@ -181,9 +181,8 @@ const SettingsModal = ({ isOpen, onClose, securityEnabled, setSecurityEnabled })
             <div className="bg-[#1e293b] w-96 p-6 rounded-2xl border border-white/10 shadow-2xl">
                 <div className="flex justify-between items-center mb-6"><h3 className="text-white font-bold flex items-center gap-2"><Settings size={18}/> System Settings</h3><button onClick={onClose} className="text-slate-400 hover:text-white"><X size={18}/></button></div>
                 <div className="bg-[#0f172a] p-4 rounded-xl border border-white/5 mb-4"><div className="flex justify-between items-center"><div><p className="text-sm font-bold text-white mb-1">Visitor Remote Approval</p><p className="text-[10px] text-slate-400">Allow access via phone notification</p></div>
-                {/* FIX TOGGLE BUTTON */}
                 <button onClick={() => setSecurityEnabled(!securityEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${securityEnabled ? 'bg-indigo-500' : 'bg-slate-600'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${securityEnabled ? 'left-7' : 'left-1'}`} /></button></div></div>
-                <p className="text-[10px] text-slate-500 text-center">Lumière OS v2.5 (Stable)</p>
+                <p className="text-[10px] text-slate-500 text-center">Lumière OS v2.5 (Strict Mode)</p>
             </div>
         </div>
     )
@@ -195,6 +194,7 @@ const Sidebar = ({ userRole, onLogout, onStudio, openSettings, approveVisitor, v
         <div className="w-[90px] h-screen bg-[#1e293b]/30 backdrop-blur-xl border-r border-white/5 flex flex-col items-center py-8 gap-8 z-50 shrink-0">
             <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-2 shadow-lg shadow-pink-500/20 animate-pulse-slow"><Camera size={24} strokeWidth={2.5}/></div>
             
+            {/* EDITOR APPROVAL BUTTON (BELL) */}
             {visitorRequest && userRole === 'editor' && (
                 <button onClick={approveVisitor} className="relative w-14 h-14 bg-red-500 rounded-2xl flex items-center justify-center text-white animate-bounce shadow-lg shadow-red-500/50 mb-4">
                     <Bell size={24} />
@@ -209,18 +209,15 @@ const Sidebar = ({ userRole, onLogout, onStudio, openSettings, approveVisitor, v
 }
 
 // ============================================================================
-// --- SECTION 6: LANDING SCREEN (OVERLAP FIX) ---
+// --- SECTION 6: LANDING SCREEN (STRICT NO-PIN MODE) ---
 // ============================================================================
 
 const LandingScreen = ({ onEnter, securityEnabled }) => {
   const [pinMode, setPinMode] = useState(false); 
-  const [visitorPinMode, setVisitorPinMode] = useState(false); 
-  
   const [isRequesting, setIsRequesting] = useState(false); 
   const [requestStatus, setRequestStatus] = useState("idle"); 
   
   const [pin, setPin] = useState("");
-  const [visitorToken, setVisitorToken] = useState("");
   const [error, setError] = useState(false);
   const [successMode, setSuccessMode] = useState(false); 
   
@@ -244,15 +241,18 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
 
   const sendAccessRequest = async () => {
       setIsRequesting(true); 
-      setVisitorPinMode(false); 
       setRequestStatus("waiting");
       set(ref(db, 'access/status'), "pending");
       
       try {
         await fetch('https://ntfy.sh/lumiere_admin_access_6011', {
             method: 'POST',
-            body: '🔔 Visitor waiting for approval!',
-            headers: { 'Title': 'Lumière Access', 'Priority': 'high' }
+            body: '🔔 Visitor waiting! Tap to open dashboard.',
+            headers: { 
+                'Title': 'Access Request', 
+                'Priority': 'high',
+                'Click': 'https://lumiere-os.vercel.app' // TAP NOTIFICATION -> BUKA APP
+            }
         });
       } catch(e) { console.log("Notify failed", e) }
   };
@@ -281,12 +281,9 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
 
   const handleEditorLogin = (inputPin) => { 
       if (inputPin === "767707") { 
-          setError(false); 
-          setPinMode(false); // TUTUP KOTAK PASSCODE DULU
-          setSuccessMode(true); // BARU BUKA SUCCESS
+          setError(false); setPinMode(false); setSuccessMode(true);
       } else { 
-          setError(true); 
-          setTimeout(() => { setError(false); setPin(""); }, 500); 
+          setError(true); setTimeout(() => { setError(false); setPin(""); }, 500); 
       } 
   };
 
@@ -298,8 +295,8 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
       
       <div className="z-10 relative flex flex-col items-center w-full max-w-md">
         
-        {/* LOGO - HILANG JIKA SEDANG LOGIN */}
-        {!successMode && !isRequesting && !pinMode && !visitorPinMode && (
+        {/* LOGO */}
+        {!successMode && !isRequesting && !pinMode && (
              <div className="mb-10 animate-fade-in">
                 <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-violet-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-pink-500/20 mx-auto mb-6">
                     <Camera className="text-white" size={32} strokeWidth={2.5} />
@@ -312,7 +309,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
         )}
 
         {/* MAIN BUTTONS */}
-        {!pinMode && !successMode && !isRequesting && !visitorPinMode && (
+        {!pinMode && !successMode && !isRequesting && (
           <div className="flex gap-6 animate-slide-up">
             <button onClick={() => setPinMode(true)} className="group w-36 h-44 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] flex flex-col items-center justify-center gap-4 hover:bg-white/60 hover:scale-105 transition-all duration-300 shadow-xl shadow-slate-200/50">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg group-hover:shadow-pink-500/30 transition-all"><Lock className="text-white" size={20} /></div>
@@ -337,7 +334,22 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
           </div>
         )}
 
-        {/* EDITOR PIN ENTRY (FIXED LOGIC) */}
+        {/* WAITING SCREEN (NO MANUAL PIN OPTION) */}
+        {isRequesting && (
+          <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4 text-center">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg mb-6 relative">
+                <div className="absolute inset-0 rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin" />
+                <Smartphone size={24} className="text-slate-400"/>
+            </div>
+            <h3 className="text-slate-800 text-xl font-black mb-2">Approval Required</h3>
+            <p className="text-sm text-slate-500 leading-relaxed mb-8">Notification sent to Owner.<br/>Waiting for remote unlock...</p>
+            <div className="flex flex-col gap-3 w-full">
+                <button onClick={() => {setIsRequesting(false); setRequestStatus("idle");}} className="text-xs text-slate-400 font-bold tracking-widest uppercase hover:text-slate-600 py-2">Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {/* EDITOR PIN ENTRY */}
         {pinMode && !successMode && (
           <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4">
             <h3 className="text-slate-800 text-xl font-bold mb-1">Editor Access</h3>
@@ -349,34 +361,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
           </div>
         )}
 
-        {/* VISITOR WAITING & MANUAL PIN (SAME AS BEFORE) */}
-        {isRequesting && (
-          <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4 text-center">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg mb-6 relative">
-                <div className="absolute inset-0 rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin" />
-                <Smartphone size={24} className="text-slate-400"/>
-            </div>
-            <h3 className="text-slate-800 text-xl font-black mb-2">Approval Required</h3>
-            <p className="text-sm text-slate-500 leading-relaxed mb-8">Notification sent to Owner.<br/>Waiting for remote unlock...</p>
-            <div className="flex flex-col gap-3 w-full">
-                <button onClick={() => {setIsRequesting(false); setRequestStatus("idle");}} className="text-xs text-slate-400 font-bold tracking-widest uppercase hover:text-slate-600 py-2">Cancel</button>
-                <button onClick={() => {setIsRequesting(false); setVisitorPinMode(true);}} className="text-[10px] text-violet-500 font-bold underline decoration-violet-300 underline-offset-4 hover:text-violet-700">Enter PIN Manually</button>
-            </div>
-          </div>
-        )}
-
-        {visitorPinMode && (
-          <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4">
-            <h3 className="text-slate-800 text-xl font-bold mb-1">Visitor PIN</h3>
-            <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-8">Ask owner for code</p>
-            <div className="flex gap-3 mb-10">{[0,1,2,3].map((_, i) => (<div key={i} className={`w-3 h-3 rounded-full transition-all duration-300 ${visitorToken.length > i ? 'bg-green-500 scale-125' : 'bg-slate-300'}`} />))}</div>
-            <input autoFocus type="text" inputMode="numeric" pattern="[0-9]*" maxLength={4} value={visitorToken} onChange={(e) => { const val = e.target.value; if (!/^\d*$/.test(val)) return; setVisitorToken(val); if(val.length === 4) { if (val === "2024") { onEnter('visitor'); } else { setError(true); setTimeout(() => { setError(false); setVisitorToken(""); }, 500); } } }} className="opacity-0 absolute inset-0 cursor-pointer h-full w-full z-50" />
-            {error && <p className="text-rose-500 text-xs font-bold uppercase animate-pulse mb-4">Invalid PIN</p>}
-            <button onClick={() => {setVisitorPinMode(false); setVisitorToken("");}} className="mt-2 px-6 py-2 rounded-full border border-slate-300 text-xs font-bold text-slate-400 hover:text-slate-800 hover:bg-white uppercase tracking-widest transition-all z-50">Cancel</button>
-          </div>
-        )}
-
-        {/* SUCCESS SCREEN (NO OVERLAP) */}
+        {/* SUCCESS SCREEN */}
         {successMode && (
           <div className="flex flex-col items-center animate-scale-up text-center bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl">
             <div className="w-24 h-24 bg-gradient-to-br from-pink-500 to-violet-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-pink-500/30 mb-8"><Camera className="text-white" size={40} strokeWidth={2.5} /></div>
@@ -404,7 +389,7 @@ export default function LumierePro() {
   
   const [visitorWaiting, setVisitorWaiting] = useState(false);
 
-  // LISTENER: EDITOR TENGOK 'PENDING'
+  // FIREBASE LISTENER FOR EDITOR
   useEffect(() => {
       if (userRole === 'editor') {
           const statusRef = ref(db, 'access/status');
