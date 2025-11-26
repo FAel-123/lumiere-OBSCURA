@@ -130,7 +130,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
       setIsRequesting(true); 
       setRequestStatus("waiting");
       set(ref(db, 'access/status'), "pending");
-      try { await fetch('https://ntfy.sh/lumiere_admin_access_6011', { method: 'POST', body: '🔔 Visitor waiting! Tap to open dashboard.', headers: { 'Title': 'Access Request', 'Priority': 'high', 'Click': 'https://lumiere-os.vercel.app' } }); } catch(e) {}
+      try { await fetch('https://ntfy.sh/lumiere_admin_access_6011', { method: 'POST', body: '🔔 Visitor waiting! Tap to open dashboard.', headers: { 'Title': 'Access Request', 'Priority': 'high', 'Click': 'https://lumiere-obscura.vercel.app/' } }); } catch(e) {}
   };
 
   const startPress = () => {
