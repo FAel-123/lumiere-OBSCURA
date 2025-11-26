@@ -3,7 +3,7 @@ import {
   Camera, Plus, BookOpen, X, Loader2, Save, Upload, 
   Lock, Eye, Trash2, Edit3, Sparkles, LogOut, ArrowRight,
   Maximize, Minimize, ChevronLeft, ChevronRight, Image as ImageIcon, Layout,
-  Search, Heart, Settings, Grid, Smartphone, Wifi, Bell, Check
+  Search, Heart, Settings, Grid, Smartphone, Wifi, Bell, Check, Shield, User
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, onValue, update } from "firebase/database";
@@ -20,14 +20,12 @@ const firebaseConfig = {
   appId: "1:688991040684:web:3f96e2c3b48e8cb9d95b09"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ============================================================================
-// --- SECTION 1: UTILITIES & HELPERS ---
+// --- SECTION 1: UTILITIES ---
 // ============================================================================
-
 const compressImage = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -54,24 +52,11 @@ const compressImage = (file) => {
 
 const Page = React.forwardRef((props, ref) => {
   return (
-    <div 
-        className="page-content bg-[#1a1a1a] overflow-hidden relative" 
-        ref={ref} 
-        style={{ ...props.style, width: '100%', height: '100%' }}
-        data-density={props.isCover ? 'hard' : 'soft'}
-    >
+    <div className="page-content bg-[#1a1a1a] overflow-hidden relative" ref={ref} style={{ ...props.style, width: '100%', height: '100%' }} data-density={props.isCover ? 'hard' : 'soft'}>
       <div className="w-full h-full relative flex items-center justify-center">
-        {props.url ? (
-             <img src={props.url} alt={`Page ${props.pageNum}`} className="w-full h-full object-cover" loading="eager" />
-        ) : (
-            <div className="w-full h-full bg-[#111] flex items-center justify-center border-l border-white/5">
-                <span className="text-white/20 text-xs tracking-widest uppercase">End of Book</span>
-            </div>
-        )}
+        {props.url ? (<img src={props.url} alt={`Page ${props.pageNum}`} className="w-full h-full object-cover" loading="eager" />) : (<div className="w-full h-full bg-[#111] flex items-center justify-center border-l border-white/5"><span className="text-white/20 text-xs tracking-widest uppercase">End of Book</span></div>)}
         <div className="absolute top-0 bottom-0 left-0 w-8 bg-gradient-to-r from-black/60 to-transparent pointer-events-none" />
-        {!props.isCover && props.pageNum && (
-            <div className="absolute bottom-4 right-4 text-[9px] text-white/70 font-sans tracking-widest drop-shadow-md">{props.pageNum}</div>
-        )}
+        {!props.isCover && props.pageNum && (<div className="absolute bottom-4 right-4 text-[9px] text-white/70 font-sans tracking-widest drop-shadow-md">{props.pageNum}</div>)}
         {props.children}
       </div>
     </div>
@@ -81,141 +66,34 @@ const Page = React.forwardRef((props, ref) => {
 // ============================================================================
 // --- SECTION 2: FLIP VIEW ---
 // ============================================================================
-
 const FlipView = ({ pages, coverUrl, backCoverUrl, onClose, title }) => {
   const bookRef = useRef();
   const [isReady, setIsReady] = useState(false);
-
   let finalPages = [ { url: coverUrl, isCover: true }, ...pages ];
   if (finalPages.length % 2 !== 0) { finalPages.push({ url: backCoverUrl || null, isCover: true }); } 
   else { finalPages.push({ url: null, isCover: false }); finalPages.push({ url: backCoverUrl || null, isCover: true }); }
-
-  useEffect(() => {
-      const timer = setTimeout(() => setIsReady(true), 300);
-      return () => clearTimeout(timer);
-  }, []);
-
+  useEffect(() => { const timer = setTimeout(() => setIsReady(true), 300); return () => clearTimeout(timer); }, []);
   return (
     <div className="fixed inset-0 z-[100] w-screen h-screen flex flex-col items-center justify-center bg-[#0f172a]/95 backdrop-blur-xl overflow-hidden animate-fade-in">
         <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-[60]">
-            <div className="px-6 py-2 rounded-full bg-slate-900/50 border border-white/10 text-white shadow-xl backdrop-blur-md">
-                <h2 className="font-sans font-bold text-sm tracking-wide uppercase">{title}</h2>
-            </div>
+            <div className="px-6 py-2 rounded-full bg-slate-900/50 border border-white/10 text-white shadow-xl backdrop-blur-md"><h2 className="font-sans font-bold text-sm tracking-wide uppercase">{title}</h2></div>
             <button onClick={onClose} className="w-12 h-12 rounded-full bg-slate-900/50 hover:bg-red-500/20 text-white hover:text-red-400 flex items-center justify-center border border-white/10 backdrop-blur-md transition-colors"><X size={20}/></button>
         </div>
         <div className="flex-1 w-full flex items-center justify-center p-4">
             {!isReady && (<div className="flex flex-col items-center gap-4 animate-pulse"><Loader2 className="animate-spin text-white/50" size={40} /><span className="text-white/30 text-[10px] tracking-[0.2em] uppercase">Opening Album</span></div>)}
-            {isReady && (
-                <HTMLFlipBook 
-                    width={450} height={600} size="fixed" minWidth={300} maxWidth={500} minHeight={400} maxHeight={700}
-                    maxShadowOpacity={0.5} showCover={true} mobileScrollSupport={true}
-                    className="shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] animate-scale-up"
-                    ref={bookRef} flippingTime={1000} usePortrait={true} startZIndex={0} autoSize={true}
-                    clickEventForward={true} useMouseEvents={true} swipeDistance={30} showPageCorners={true} disableFlipByClick={false}
-                >
-                    {finalPages.map((page, index) => (
-                        <Page key={index} url={page.url} pageNum={index} isCover={page.isCover} />
-                    ))}
-                </HTMLFlipBook>
-            )}
+            {isReady && (<HTMLFlipBook width={450} height={600} size="fixed" minWidth={300} maxWidth={500} minHeight={400} maxHeight={700} maxShadowOpacity={0.5} showCover={true} mobileScrollSupport={true} className="shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] animate-scale-up" ref={bookRef} flippingTime={1000} usePortrait={true} startZIndex={0} autoSize={true} clickEventForward={true} useMouseEvents={true} swipeDistance={30} showPageCorners={true} disableFlipByClick={false}>{finalPages.map((page, index) => (<Page key={index} url={page.url} pageNum={index} isCover={page.isCover} />))}</HTMLFlipBook>)}
         </div>
     </div>
   );
 }
 
 // ============================================================================
-// --- SECTION 3: STUDIO EDITOR ---
+// --- SECTION 3: LANDING SCREEN (APPROVE & DENY HANDLING) ---
 // ============================================================================
-
-const CreateStudio = ({ onClose, title, setTitle, audio, setAudio, pages, setPages, cover, setCover, backCover, setBackCover, onUploadPages, onUploadCover, onUploadBackCover, onPublish, isSaving, statusMsg }) => {
-  return (
-    <div className="fixed inset-0 z-50 bg-[#0f172a] text-white font-sans animate-slide-up flex flex-col h-[100dvh]">
-      <div className="h-20 shrink-0 border-b border-white/5 flex items-center justify-between px-8 bg-[#0f172a]/90 backdrop-blur-md z-20"><div className="flex items-center gap-4"><button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg transition-colors"><X size={24}/></button><h1 className="text-xl font-serif italic text-slate-200">Studio Editor</h1></div><button onClick={onPublish} disabled={isSaving} className="text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 font-medium rounded-lg text-sm px-6 py-2.5 text-center flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20">{isSaving ? <Loader2 className="animate-spin" size={18}/> : <><Save size={18}/> Publish</>}</button></div>
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 relative"><div className="w-full md:w-96 border-b md:border-b-0 md:border-r border-white/5 bg-[#1e293b]/50 flex flex-col z-10 shrink-0 backdrop-blur-sm"><div className="flex-1 overflow-y-auto p-6 scrollbar-hide"><h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2 sticky top-0 py-2 z-10"><Edit3 size={14}/> Book Details</h2><div className="space-y-6 pb-10"><div><label className="block mb-2 text-sm font-bold text-slate-400">Title</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="bg-slate-900/50 border border-slate-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Untitled Album" /></div><div className="grid grid-cols-2 gap-4">{[{label: "Front", img: cover, func: onUploadCover}, {label: "Back", img: backCover, func: onUploadBackCover}].map((item, idx) => (<div key={idx} className="bg-slate-900/50 p-3 rounded-xl border border-white/5"><label className="block mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.label}</label><div className="relative aspect-[3/4] bg-[#0f172a] rounded-lg border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden group hover:border-slate-500 transition-colors">{item.img ? <img src={item.img} className="w-full h-full object-cover" /> : <div className="text-center text-slate-600"><ImageIcon size={20} className="mx-auto mb-1" /></div>}<label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity"><input type="file" className="hidden" accept="image/*" onChange={item.func} /><Plus className="text-white bg-white/20 rounded-full p-1" size={24}/></label></div></div>))}</div><div><label className="block mb-2 text-sm font-bold text-slate-400">Audio URL</label><input type="url" value={audio} onChange={(e) => setAudio(e.target.value)} className="bg-slate-900/50 border border-slate-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="https://..." /></div>{statusMsg && <div className="p-3 mb-4 text-xs text-cyan-200 rounded-lg bg-cyan-900/20 border border-cyan-800 flex items-center gap-2"><Loader2 size={12} className="animate-spin"/> {statusMsg}</div>}</div></div></div><div className="flex-1 bg-[#0f172a] relative flex flex-col min-h-0"><div className="flex-1 overflow-y-auto p-8 pb-32"><div className="flex justify-between items-center mb-6 sticky top-0 z-10 bg-[#0f172a]/90 backdrop-blur-md py-4 border-b border-white/5"><h3 className="text-xl font-bold text-slate-200">Pages Gallery</h3><label className="cursor-pointer bg-white text-black px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-slate-200 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"><Plus size={16}/> Add Photos<input type="file" multiple accept="image/*" className="hidden" onChange={onUploadPages} /></label></div><div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">{pages.map((page, idx) => (<div key={idx} className="relative group aspect-[4/5] rounded-xl overflow-hidden border border-white/5 bg-slate-800 shadow-xl hover:ring-2 hover:ring-indigo-500 transition-all duration-300"><img src={page.url} className="w-full h-full object-cover" alt={`Page ${idx}`} /><button onClick={() => setPages(p => p.filter((_, i) => i !== idx))} className="absolute top-2 right-2 p-2 bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-lg transform translate-y-2 group-hover:translate-y-0"><Trash2 size={14}/></button></div>))}</div></div></div></div></div>
-  );
-};
-
-// ============================================================================
-// --- SECTION 4: CAROUSEL ---
-// ============================================================================
-
-const Carousel3D = ({ books, onSelect }) => {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const nextSlide = () => setActiveIndex((prev) => (prev + 1) % books.length);
-  const prevSlide = () => setActiveIndex((prev) => (prev - 1 + books.length) % books.length);
-  useEffect(() => {
-    const handleKeyDown = (e) => { if (e.key === 'ArrowRight') nextSlide(); if (e.key === 'ArrowLeft') prevSlide(); if (e.key === 'Enter') onSelect(books[activeIndex]); };
-    window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeIndex, books]);
-  return (
-    <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none select-none"><h1 className="text-[15vw] font-black tracking-tighter text-white/5 leading-none">LIBRARY</h1></div>
-        <div className="relative w-full max-w-[1400px] h-[600px] flex items-center justify-center perspective-camera z-10 mt-10">
-          <div className="relative w-full h-full flex items-center justify-center preserve-3d">
-            {books.map((book, index) => {
-              let offset = index - activeIndex;
-              if (offset < -2) offset += books.length; if (offset > 2) offset -= books.length;
-              const isActive = offset === 0;
-              return (
-                <div key={book.id} className={`absolute w-[350px] aspect-[4/5] transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isActive ? 'cursor-pointer' : 'cursor-default pointer-events-none'}`} style={{ transform: `translateX(${offset * 380}px) translateZ(${isActive ? 200 : -300}px) rotateY(${offset * -20}deg)`, zIndex: isActive ? 50 : 20 - Math.abs(offset), opacity: Math.abs(offset) > 2 ? 0 : 1 }} onClick={() => isActive ? onSelect(book) : (offset > 0 ? nextSlide() : prevSlide())}>
-                  <div className={`w-full h-full bg-[#1e293b] rounded-xl overflow-hidden relative shadow-[0_30px_60px_-10px_rgba(0,0,0,0.6)] border border-white/10 transition-all duration-500 ${isActive ? 'brightness-105 scale-100 ring-1 ring-white/30' : 'brightness-50 grayscale scale-90'}`}><img src={book.coverUrl} className="w-full h-full object-cover" /><div className="absolute bottom-0 inset-x-0 p-8 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/80 to-transparent"><h3 className="text-3xl font-serif font-bold text-white mb-2 leading-tight drop-shadow-lg">{book.title}</h3><p className="text-xs text-indigo-300 uppercase tracking-[0.2em] font-medium">{book.pageCount} Pages</p></div></div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="flex items-center gap-8 mt-12 z-50"><button onClick={prevSlide} className="w-14 h-14 rounded-full bg-white/5 hover:bg-white/20 border border-white/10 flex items-center justify-center text-white transition-all shadow-lg hover:scale-110"><ChevronLeft size={24}/></button><button onClick={nextSlide} className="w-14 h-14 rounded-full bg-white/5 hover:bg-white/20 border border-white/10 flex items-center justify-center text-white transition-all shadow-lg hover:scale-110"><ChevronRight size={24}/></button></div>
-    </div>
-  );
-};
-
-// ============================================================================
-// --- SECTION 5: SETTINGS & SIDEBAR ---
-// ============================================================================
-
-const SettingsModal = ({ isOpen, onClose, securityEnabled, setSecurityEnabled }) => {
-    if (!isOpen) return null;
-    return (
-        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in">
-            <div className="bg-[#1e293b] w-96 p-6 rounded-2xl border border-white/10 shadow-2xl">
-                <div className="flex justify-between items-center mb-6"><h3 className="text-white font-bold flex items-center gap-2"><Settings size={18}/> System Settings</h3><button onClick={onClose} className="text-slate-400 hover:text-white"><X size={18}/></button></div>
-                <div className="bg-[#0f172a] p-4 rounded-xl border border-white/5 mb-4"><div className="flex justify-between items-center"><div><p className="text-sm font-bold text-white mb-1">Visitor Remote Approval</p><p className="text-[10px] text-slate-400">Allow access via phone notification</p></div>
-                <button onClick={() => setSecurityEnabled(!securityEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${securityEnabled ? 'bg-indigo-500' : 'bg-slate-600'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${securityEnabled ? 'left-7' : 'left-1'}`} /></button></div></div>
-                <p className="text-[10px] text-slate-500 text-center">Lumière OS v2.5 (Strict Mode)</p>
-            </div>
-        </div>
-    )
-}
-
-const Sidebar = ({ userRole, onLogout, onStudio, openSettings, approveVisitor, visitorRequest }) => {
-    const menuItems = [ { icon: BookOpen, label: 'Library', active: true }, { icon: Heart, label: 'Favorites', active: false }, { icon: Grid, label: 'Collections', active: false } ];
-    return (
-        <div className="w-[90px] h-screen bg-[#1e293b]/30 backdrop-blur-xl border-r border-white/5 flex flex-col items-center py-8 gap-8 z-50 shrink-0">
-            <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-2 shadow-lg shadow-pink-500/20 animate-pulse-slow"><Camera size={24} strokeWidth={2.5}/></div>
-            
-            {/* EDITOR APPROVAL BUTTON (BELL) */}
-            {visitorRequest && userRole === 'editor' && (
-                <button onClick={approveVisitor} className="relative w-14 h-14 bg-red-500 rounded-2xl flex items-center justify-center text-white animate-bounce shadow-lg shadow-red-500/50 mb-4">
-                    <Bell size={24} />
-                    <span className="absolute -top-2 -right-2 bg-white text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full">1</span>
-                </button>
-            )}
-
-            <div className="flex flex-col gap-6 w-full px-3">{menuItems.map((item, idx) => (<button key={idx} className={`group relative flex items-center justify-center w-full aspect-square rounded-2xl transition-all duration-300 ${item.active ? 'bg-white text-slate-900 shadow-lg shadow-white/10' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}><item.icon size={22} strokeWidth={item.active ? 2.5 : 2} /><span className="absolute left-16 bg-white text-slate-900 text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">{item.label}</span></button>))}</div>
-            <div className="mt-auto flex flex-col gap-6 w-full px-3">{userRole === 'editor' && (<><button onClick={onStudio} className="group w-full aspect-square rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30 hover:scale-105 transition-all"><Plus size={24} /><span className="absolute left-16 bg-white text-slate-900 text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">Create</span></button><button onClick={openSettings} className="group w-full aspect-square rounded-2xl text-slate-400 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all"><Settings size={22} /><span className="absolute left-16 bg-white text-slate-900 text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">Config</span></button></>)}<button onClick={onLogout} className="w-full aspect-square rounded-2xl text-slate-500 hover:bg-red-500/10 hover:text-red-400 flex items-center justify-center transition-all"><LogOut size={22} /></button></div>
-        </div>
-    )
-}
-
-// ============================================================================
-// --- SECTION 6: LANDING SCREEN (STRICT NO-PIN MODE) ---
-// ============================================================================
-
 const LandingScreen = ({ onEnter, securityEnabled }) => {
   const [pinMode, setPinMode] = useState(false); 
   const [isRequesting, setIsRequesting] = useState(false); 
-  const [requestStatus, setRequestStatus] = useState("idle"); 
+  const [requestStatus, setRequestStatus] = useState("idle"); // idle, waiting, approved, denied
   
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
@@ -225,6 +103,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
   const [isPressing, setIsPressing] = useState(false);
   const animationRef = useRef(null);
 
+  // LISTENER STATUS
   useEffect(() => {
     if (requestStatus === "waiting") {
         const statusRef = ref(db, 'access/status');
@@ -233,6 +112,14 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
             if (val === "approved") {
                 onEnter('visitor'); 
                 set(ref(db, 'access/status'), "locked"); 
+            } else if (val === "denied") {
+                setRequestStatus("denied"); // Tunjuk skrin merah
+                // Reset after 3 seconds
+                setTimeout(() => {
+                    setRequestStatus("idle");
+                    setIsRequesting(false);
+                    set(ref(db, 'access/status'), "locked"); 
+                }, 3000);
             }
         });
         return () => unsubscribe();
@@ -243,18 +130,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
       setIsRequesting(true); 
       setRequestStatus("waiting");
       set(ref(db, 'access/status'), "pending");
-      
-      try {
-        await fetch('https://ntfy.sh/lumiere_admin_access_6011', {
-            method: 'POST',
-            body: '🔔 Visitor waiting! Tap to open dashboard.',
-            headers: { 
-                'Title': 'Access Request', 
-                'Priority': 'high',
-                'Click': 'https://lumiere-os.vercel.app' // TAP NOTIFICATION -> BUKA APP
-            }
-        });
-      } catch(e) { console.log("Notify failed", e) }
+      try { await fetch('https://ntfy.sh/lumiere_admin_access_6011', { method: 'POST', body: '🔔 Visitor waiting! Tap to open dashboard.', headers: { 'Title': 'Access Request', 'Priority': 'high', 'Click': 'https://lumiere-os.vercel.app' } }); } catch(e) {}
   };
 
   const startPress = () => {
@@ -264,29 +140,14 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
           let now = Date.now();
           let p = Math.min((now - start) / 1500 * 100, 100); 
           setProgress(p);
-          if (p < 100) {
-              animationRef.current = requestAnimationFrame(animate);
-          } else {
-              sendAccessRequest();
-          }
+          if (p < 100) { animationRef.current = requestAnimationFrame(animate); } 
+          else { sendAccessRequest(); }
       };
       animationRef.current = requestAnimationFrame(animate);
   }
 
-  const cancelPress = () => {
-      setIsPressing(false);
-      setProgress(0);
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-  }
-
-  const handleEditorLogin = (inputPin) => { 
-      if (inputPin === "767707") { 
-          setError(false); setPinMode(false); setSuccessMode(true);
-      } else { 
-          setError(true); setTimeout(() => { setError(false); setPin(""); }, 500); 
-      } 
-  };
-
+  const cancelPress = () => { setIsPressing(false); setProgress(0); if (animationRef.current) cancelAnimationFrame(animationRef.current); }
+  const handleEditorLogin = (inputPin) => { if (inputPin === "767707") { setError(false); setPinMode(false); setSuccessMode(true); } else { setError(true); setTimeout(() => { setError(false); setPin(""); }, 500); } };
   const handleLogout = () => { setSuccessMode(false); setPinMode(false); setPin(""); }
 
   return (
@@ -295,61 +156,48 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
       
       <div className="z-10 relative flex flex-col items-center w-full max-w-md">
         
-        {/* LOGO */}
-        {!successMode && !isRequesting && !pinMode && (
+        {!successMode && !isRequesting && !pinMode && requestStatus !== "denied" && (
              <div className="mb-10 animate-fade-in">
-                <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-violet-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-pink-500/20 mx-auto mb-6">
-                    <Camera className="text-white" size={32} strokeWidth={2.5} />
-                </div>
-                <div className="text-center">
-                    <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-2">Lumière OS</h1>
-                    <p className="text-[10px] font-bold tracking-[0.3em] text-slate-400 uppercase">Select Your Journey</p>
-                </div>
+                <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-violet-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-pink-500/20 mx-auto mb-6"><Camera className="text-white" size={32} strokeWidth={2.5} /></div>
+                <div className="text-center"><h1 className="text-4xl font-black text-slate-800 tracking-tight mb-2">Lumière OS</h1><p className="text-[10px] font-bold tracking-[0.3em] text-slate-400 uppercase">Select Your Journey</p></div>
             </div>
         )}
 
-        {/* MAIN BUTTONS */}
-        {!pinMode && !successMode && !isRequesting && (
+        {/* BUTTONS */}
+        {!pinMode && !successMode && !isRequesting && requestStatus !== "denied" && (
           <div className="flex gap-6 animate-slide-up">
             <button onClick={() => setPinMode(true)} className="group w-36 h-44 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] flex flex-col items-center justify-center gap-4 hover:bg-white/60 hover:scale-105 transition-all duration-300 shadow-xl shadow-slate-200/50">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg group-hover:shadow-pink-500/30 transition-all"><Lock className="text-white" size={20} /></div>
                 <span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">Editor</span>
             </button>
-            
-            <button 
-                onMouseDown={securityEnabled ? startPress : () => onEnter('visitor')} 
-                onMouseUp={securityEnabled ? cancelPress : null}
-                onMouseLeave={securityEnabled ? cancelPress : null}
-                onTouchStart={securityEnabled ? startPress : () => onEnter('visitor')}
-                onTouchEnd={securityEnabled ? cancelPress : null}
-                className="group relative w-36 h-44 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] flex flex-col items-center justify-center gap-4 hover:bg-white/60 hover:scale-105 transition-all duration-300 shadow-xl shadow-slate-200/50 overflow-hidden"
-            >
+            <button onMouseDown={securityEnabled ? startPress : () => onEnter('visitor')} onMouseUp={securityEnabled ? cancelPress : null} onMouseLeave={securityEnabled ? cancelPress : null} onTouchStart={securityEnabled ? startPress : () => onEnter('visitor')} onTouchEnd={securityEnabled ? cancelPress : null} className="group relative w-36 h-44 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] flex flex-col items-center justify-center gap-4 hover:bg-white/60 hover:scale-105 transition-all duration-300 shadow-xl shadow-slate-200/50 overflow-hidden">
                 <div className="absolute bottom-0 left-0 right-0 bg-violet-500/10 transition-all duration-75" style={{ height: `${progress}%` }} />
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-purple-500/30 transition-all relative z-10"><Eye className="text-white" size={20} /></div>
-                <div className="flex flex-col items-center z-10">
-                    <span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">Visitor</span>
-                    {securityEnabled && <span className="text-[8px] text-slate-400 uppercase mt-1">{progress > 0 ? "Hold..." : "Hold to Request"}</span>}
-                </div>
+                <div className="flex flex-col items-center z-10"><span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">Visitor</span>{securityEnabled && <span className="text-[8px] text-slate-400 uppercase mt-1">{progress > 0 ? "Hold..." : "Hold to Request"}</span>}</div>
             </button>
           </div>
         )}
 
-        {/* WAITING SCREEN (NO MANUAL PIN OPTION) */}
-        {isRequesting && (
+        {/* WAITING SCREEN */}
+        {isRequesting && requestStatus === "waiting" && (
           <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4 text-center">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg mb-6 relative">
-                <div className="absolute inset-0 rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin" />
-                <Smartphone size={24} className="text-slate-400"/>
-            </div>
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg mb-6 relative"><div className="absolute inset-0 rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin" /><Smartphone size={24} className="text-slate-400"/></div>
             <h3 className="text-slate-800 text-xl font-black mb-2">Approval Required</h3>
             <p className="text-sm text-slate-500 leading-relaxed mb-8">Notification sent to Owner.<br/>Waiting for remote unlock...</p>
-            <div className="flex flex-col gap-3 w-full">
-                <button onClick={() => {setIsRequesting(false); setRequestStatus("idle");}} className="text-xs text-slate-400 font-bold tracking-widest uppercase hover:text-slate-600 py-2">Cancel</button>
-            </div>
+            <button onClick={() => {setIsRequesting(false); setRequestStatus("idle");}} className="text-xs text-slate-400 font-bold tracking-widest uppercase hover:text-slate-600 py-2">Cancel</button>
           </div>
         )}
 
-        {/* EDITOR PIN ENTRY */}
+        {/* DENIED SCREEN */}
+        {requestStatus === "denied" && (
+          <div className="flex flex-col items-center animate-shake bg-red-50/80 backdrop-blur-xl border border-red-200 p-10 rounded-[2.5rem] shadow-2xl shadow-red-500/20 w-full mx-4 text-center">
+            <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center shadow-lg mb-6 text-white"><X size={32} strokeWidth={3}/></div>
+            <h3 className="text-red-900 text-xl font-black mb-2">Access Denied</h3>
+            <p className="text-sm text-red-700 leading-relaxed mb-4">The owner has declined your request.</p>
+          </div>
+        )}
+
+        {/* EDITOR PIN */}
         {pinMode && !successMode && (
           <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4">
             <h3 className="text-slate-800 text-xl font-bold mb-1">Editor Access</h3>
@@ -361,7 +209,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
           </div>
         )}
 
-        {/* SUCCESS SCREEN */}
+        {/* SUCCESS */}
         {successMode && (
           <div className="flex flex-col items-center animate-scale-up text-center bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl">
             <div className="w-24 h-24 bg-gradient-to-br from-pink-500 to-violet-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-pink-500/30 mb-8"><Camera className="text-white" size={40} strokeWidth={2.5} /></div>
@@ -376,7 +224,95 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
 };
 
 // ============================================================================
-// --- SECTION 7: MAIN APP (CONNECTED) ---
+// --- SECTION 4 & 5: STUDIO, CAROUSEL & SETTINGS (KEKAL SAMA) ---
+// ============================================================================
+// (Saya ringkaskan bahagian ini sebab tak berubah)
+const CreateStudio = ({ onClose, title, setTitle, audio, setAudio, pages, setPages, cover, setCover, backCover, setBackCover, onUploadPages, onUploadCover, onUploadBackCover, onPublish, isSaving, statusMsg }) => {return (<div className="fixed inset-0 z-50 bg-[#0f172a] text-white font-sans animate-slide-up flex flex-col h-[100dvh]"><div className="h-20 shrink-0 border-b border-white/5 flex items-center justify-between px-8 bg-[#0f172a]/90 backdrop-blur-md z-20"><div className="flex items-center gap-4"><button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg transition-colors"><X size={24}/></button><h1 className="text-xl font-serif italic text-slate-200">Studio Editor</h1></div><button onClick={onPublish} disabled={isSaving} className="text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 font-medium rounded-lg text-sm px-6 py-2.5 text-center flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20">{isSaving ? <Loader2 className="animate-spin" size={18}/> : <><Save size={18}/> Publish</>}</button></div><div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 relative"><div className="w-full md:w-96 border-b md:border-b-0 md:border-r border-white/5 bg-[#1e293b]/50 flex flex-col z-10 shrink-0 backdrop-blur-sm"><div className="flex-1 overflow-y-auto p-6 scrollbar-hide"><h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6 flex items-center gap-2 sticky top-0 py-2 z-10"><Edit3 size={14}/> Book Details</h2><div className="space-y-6 pb-10"><div><label className="block mb-2 text-sm font-bold text-slate-400">Title</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="bg-slate-900/50 border border-slate-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Untitled Album" /></div><div className="grid grid-cols-2 gap-4">{[{label: "Front", img: cover, func: onUploadCover}, {label: "Back", img: backCover, func: onUploadBackCover}].map((item, idx) => (<div key={idx} className="bg-slate-900/50 p-3 rounded-xl border border-white/5"><label className="block mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.label}</label><div className="relative aspect-[3/4] bg-[#0f172a] rounded-lg border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden group hover:border-slate-500 transition-colors">{item.img ? <img src={item.img} className="w-full h-full object-cover" /> : <div className="text-center text-slate-600"><ImageIcon size={20} className="mx-auto mb-1" /></div>}<label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity"><input type="file" className="hidden" accept="image/*" onChange={item.func} /><Plus className="text-white bg-white/20 rounded-full p-1" size={24}/></label></div></div>))}</div><div><label className="block mb-2 text-sm font-bold text-slate-400">Audio URL</label><input type="url" value={audio} onChange={(e) => setAudio(e.target.value)} className="bg-slate-900/50 border border-slate-700 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="https://..." /></div>{statusMsg && <div className="p-3 mb-4 text-xs text-cyan-200 rounded-lg bg-cyan-900/20 border border-cyan-800 flex items-center gap-2"><Loader2 size={12} className="animate-spin"/> {statusMsg}</div>}</div></div></div><div className="flex-1 bg-[#0f172a] relative flex flex-col min-h-0"><div className="flex-1 overflow-y-auto p-8 pb-32"><div className="flex justify-between items-center mb-6 sticky top-0 z-10 bg-[#0f172a]/90 backdrop-blur-md py-4 border-b border-white/5"><h3 className="text-xl font-bold text-slate-200">Pages Gallery</h3><label className="cursor-pointer bg-white text-black px-5 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-slate-200 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"><Plus size={16}/> Add Photos<input type="file" multiple accept="image/*" className="hidden" onChange={onUploadPages} /></label></div><div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">{pages.map((page, idx) => (<div key={idx} className="relative group aspect-[4/5] rounded-xl overflow-hidden border border-white/5 bg-slate-800 shadow-xl hover:ring-2 hover:ring-indigo-500 transition-all duration-300"><img src={page.url} className="w-full h-full object-cover" alt={`Page ${idx}`} /><button onClick={() => setPages(p => p.filter((_, i) => i !== idx))} className="absolute top-2 right-2 p-2 bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-lg transform translate-y-2 group-hover:translate-y-0"><Trash2 size={14}/></button></div>))}</div></div></div></div></div>);};
+const Carousel3D = ({ books, onSelect }) => {const [activeIndex, setActiveIndex] = useState(0);const nextSlide = () => setActiveIndex((prev) => (prev + 1) % books.length);const prevSlide = () => setActiveIndex((prev) => (prev - 1 + books.length) % books.length);useEffect(() => {const handleKeyDown = (e) => { if (e.key === 'ArrowRight') nextSlide(); if (e.key === 'ArrowLeft') prevSlide(); if (e.key === 'Enter') onSelect(books[activeIndex]); };window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown);}, [activeIndex, books]);return (<div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[120px] pointer-events-none" /><div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none select-none"><h1 className="text-[15vw] font-black tracking-tighter text-white/5 leading-none">LIBRARY</h1></div><div className="relative w-full max-w-[1400px] h-[600px] flex items-center justify-center perspective-camera z-10 mt-10"><div className="relative w-full h-full flex items-center justify-center preserve-3d">{books.map((book, index) => {let offset = index - activeIndex;if (offset < -2) offset += books.length; if (offset > 2) offset -= books.length;const isActive = offset === 0;return (<div key={book.id} className={`absolute w-[350px] aspect-[4/5] transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isActive ? 'cursor-pointer' : 'cursor-default pointer-events-none'}`} style={{ transform: `translateX(${offset * 380}px) translateZ(${isActive ? 200 : -300}px) rotateY(${offset * -20}deg)`, zIndex: isActive ? 50 : 20 - Math.abs(offset), opacity: Math.abs(offset) > 2 ? 0 : 1 }} onClick={() => isActive ? onSelect(book) : (offset > 0 ? nextSlide() : prevSlide())}><div className={`w-full h-full bg-[#1e293b] rounded-xl overflow-hidden relative shadow-[0_30px_60px_-10px_rgba(0,0,0,0.6)] border border-white/10 transition-all duration-500 ${isActive ? 'brightness-105 scale-100 ring-1 ring-white/30' : 'brightness-50 grayscale scale-90'}`}><img src={book.coverUrl} className="w-full h-full object-cover" /><div className="absolute bottom-0 inset-x-0 p-8 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/80 to-transparent"><h3 className="text-3xl font-serif font-bold text-white mb-2 leading-tight drop-shadow-lg">{book.title}</h3><p className="text-xs text-indigo-300 uppercase tracking-[0.2em] font-medium">{book.pageCount} Pages</p></div></div></div>);})}</div></div><div className="flex items-center gap-8 mt-12 z-50"><button onClick={prevSlide} className="w-14 h-14 rounded-full bg-white/5 hover:bg-white/20 border border-white/10 flex items-center justify-center text-white transition-all shadow-lg hover:scale-110"><ChevronLeft size={24}/></button><button onClick={nextSlide} className="w-14 h-14 rounded-full bg-white/5 hover:bg-white/20 border border-white/10 flex items-center justify-center text-white transition-all shadow-lg hover:scale-110"><ChevronRight size={24}/></button></div></div>);};
+const SettingsModal = ({ isOpen, onClose, securityEnabled, setSecurityEnabled }) => {if (!isOpen) return null;return (<div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in"><div className="bg-[#1e293b] w-96 p-6 rounded-2xl border border-white/10 shadow-2xl"><div className="flex justify-between items-center mb-6"><h3 className="text-white font-bold flex items-center gap-2"><Settings size={18}/> System Settings</h3><button onClick={onClose} className="text-slate-400 hover:text-white"><X size={18}/></button></div><div className="bg-[#0f172a] p-4 rounded-xl border border-white/5 mb-4"><div className="flex justify-between items-center"><div><p className="text-sm font-bold text-white mb-1">Visitor Remote Approval</p><p className="text-[10px] text-slate-400">Allow access via phone notification</p></div><button onClick={() => setSecurityEnabled(!securityEnabled)} className={`w-12 h-6 rounded-full transition-colors relative ${securityEnabled ? 'bg-indigo-500' : 'bg-slate-600'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${securityEnabled ? 'left-7' : 'left-1'}`} /></button></div></div><p className="text-[10px] text-slate-500 text-center">Lumière OS v2.5 (Strict Mode)</p></div></div>)}
+
+// ============================================================================
+// --- SECTION 6: SIDEBAR (ICON SHIELD BARU) ---
+// ============================================================================
+
+const Sidebar = ({ userRole, onLogout, onStudio, openSettings, visitorRequest, openRequests }) => {
+    const menuItems = [ 
+        { icon: BookOpen, label: 'Library', active: true }, 
+        { icon: Heart, label: 'Favorites', active: false }, 
+        { icon: Grid, label: 'Collections', active: false } 
+    ];
+    return (
+        <div className="w-[90px] h-screen bg-[#1e293b]/30 backdrop-blur-xl border-r border-white/5 flex flex-col items-center py-8 gap-8 z-50 shrink-0">
+            <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-violet-600 rounded-2xl flex items-center justify-center text-white mb-2 shadow-lg shadow-pink-500/20 animate-pulse-slow"><Camera size={24} strokeWidth={2.5}/></div>
+            
+            {/* MENU BIASA */}
+            <div className="flex flex-col gap-6 w-full px-3">
+                {menuItems.map((item, idx) => (
+                    <button key={idx} className={`group relative flex items-center justify-center w-full aspect-square rounded-2xl transition-all duration-300 ${item.active ? 'bg-white text-slate-900 shadow-lg shadow-white/10' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}>
+                        <item.icon size={22} strokeWidth={item.active ? 2.5 : 2} />
+                    </button>
+                ))}
+                
+                {/* --- REQUEST ICON (SHIELD) --- */}
+                {/* Ikon ini sentiasa ada untuk Editor, tapi ada Red Dot kalau ada request */}
+                {userRole === 'editor' && (
+                    <button onClick={openRequests} className={`group relative flex items-center justify-center w-full aspect-square rounded-2xl transition-all duration-300 ${visitorRequest ? 'bg-red-500/20 text-red-400 animate-pulse' : 'text-slate-400 hover:text-white'}`}>
+                        <Shield size={22} />
+                        {/* RED DOT BADGE */}
+                        {visitorRequest && <span className="absolute top-2 right-3 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-[#1e293b]" />}
+                        <span className="absolute left-16 bg-white text-slate-900 text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">Access Requests</span>
+                    </button>
+                )}
+            </div>
+
+            <div className="mt-auto flex flex-col gap-6 w-full px-3">{userRole === 'editor' && (<><button onClick={onStudio} className="group w-full aspect-square rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30 hover:scale-105 transition-all"><Plus size={24} /><span className="absolute left-16 bg-white text-slate-900 text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">Create</span></button><button onClick={openSettings} className="group w-full aspect-square rounded-2xl text-slate-400 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all"><Settings size={22} /><span className="absolute left-16 bg-white text-slate-900 text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-md">Config</span></button></>)}<button onClick={onLogout} className="w-full aspect-square rounded-2xl text-slate-500 hover:bg-red-500/10 hover:text-red-400 flex items-center justify-center transition-all"><LogOut size={22} /></button></div>
+        </div>
+    )
+}
+
+// ============================================================================
+// --- SECTION 7: REQUEST MODAL (APPROVE/DENY) ---
+// ============================================================================
+
+const RequestsModal = ({ isOpen, onClose, visitorRequest, onApprove, onDeny }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in">
+            <div className="bg-[#1e293b] w-[400px] p-6 rounded-2xl border border-white/10 shadow-2xl">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-white font-bold flex items-center gap-2"><Shield size={18}/> Access Requests</h3>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white"><X size={18}/></button>
+                </div>
+                
+                {!visitorRequest ? (
+                    <div className="flex flex-col items-center py-10 text-slate-500">
+                        <Shield size={40} className="mb-4 opacity-20"/>
+                        <p className="text-sm">No pending requests</p>
+                    </div>
+                ) : (
+                    <div className="bg-[#0f172a] p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center text-slate-400">
+                                <User size={20}/>
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-white">New Visitor</p>
+                                <p className="text-[10px] text-slate-400">Requesting full access</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={onDeny} className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"><X size={16}/></button>
+                            <button onClick={onApprove} className="w-8 h-8 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center hover:bg-green-500 hover:text-white transition-colors"><Check size={16}/></button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+// ============================================================================
+// --- SECTION 8: MAIN APP (WIRED UP) ---
 // ============================================================================
 
 export default function LumierePro() {
@@ -387,9 +323,10 @@ export default function LumierePro() {
   const [securityEnabled, setSecurityEnabled] = useState(true); 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
+  // NEW: REQUEST MODAL STATE
+  const [isRequestsOpen, setIsRequestsOpen] = useState(false);
   const [visitorWaiting, setVisitorWaiting] = useState(false);
 
-  // FIREBASE LISTENER FOR EDITOR
   useEffect(() => {
       if (userRole === 'editor') {
           const statusRef = ref(db, 'access/status');
@@ -401,9 +338,16 @@ export default function LumierePro() {
       }
   }, [userRole]);
 
-  const handleApproveVisitor = () => {
+  const handleApprove = () => {
       set(ref(db, 'access/status'), "approved");
       setVisitorWaiting(false);
+      setIsRequestsOpen(false);
+  }
+
+  const handleDeny = () => {
+      set(ref(db, 'access/status'), "denied");
+      setVisitorWaiting(false);
+      setIsRequestsOpen(false);
   }
 
   const [studioTitle, setStudioTitle] = useState(''); const [studioAudio, setStudioAudio] = useState(''); const [studioCover, setStudioCover] = useState(null); const [studioBackCover, setStudioBackCover] = useState(null); const [studioPages, setStudioPages] = useState([]); const [isSaving, setIsSaving] = useState(false); const [statusMsg, setStatusMsg] = useState("");
@@ -417,12 +361,23 @@ export default function LumierePro() {
   return (
     <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans overflow-hidden h-screen w-screen selection:bg-indigo-500/30">
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} securityEnabled={securityEnabled} setSecurityEnabled={setSecurityEnabled} />
+      
+      {/* REQUEST MODAL (NEW) */}
+      <RequestsModal isOpen={isRequestsOpen} onClose={() => setIsRequestsOpen(false)} visitorRequest={visitorWaiting} onApprove={handleApprove} onDeny={handleDeny} />
+
       {view === 'landing' && <LandingScreen onEnter={handleLogin} securityEnabled={securityEnabled} />}
       {view === 'reader' && currentBook && ( <FlipView pages={currentBook.pages || []} coverUrl={currentBook.coverUrl} backCoverUrl={currentBook.backCoverUrl} title={currentBook.title} onClose={() => setView('dashboard')} /> )}
       {view === 'studio' && ( <CreateStudio onClose={() => setView('dashboard')} title={studioTitle} setTitle={setStudioTitle} audio={studioAudio} setAudio={setStudioAudio} cover={studioCover} setCover={setStudioCover} backCover={studioBackCover} setBackCover={setStudioBackCover} pages={studioPages} setPages={setStudioPages} onUploadCover={handleUploadCover} onUploadBackCover={handleUploadBackCover} onUploadPages={handleUploadPages} onPublish={handlePublish} isSaving={isSaving} statusMsg={statusMsg} /> )}
       {view === 'dashboard' && (
         <div className="flex h-screen w-full overflow-hidden">
-             <Sidebar userRole={userRole} onLogout={() => setView('landing')} onStudio={() => handleOpenStudio(null)} openSettings={() => setIsSettingsOpen(true)} visitorRequest={visitorWaiting} approveVisitor={handleApproveVisitor} />
+             <Sidebar 
+                userRole={userRole} 
+                onLogout={() => setView('landing')} 
+                onStudio={() => handleOpenStudio(null)} 
+                openSettings={() => setIsSettingsOpen(true)}
+                openRequests={() => setIsRequestsOpen(true)} // Buka Modal
+                visitorRequest={visitorWaiting} // Trigger Red Dot
+             />
             <div className="flex-1 h-full overflow-hidden bg-[#0f172a] relative flex flex-col min-h-0">
                 <div className="flex-1 relative min-h-0">
                     <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/10 via-transparent to-transparent pointer-events-none z-0"/>
