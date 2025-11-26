@@ -9,7 +9,16 @@ import { initializeApp } from 'firebase/app';
 import HTMLFlipBook from 'react-pageflip';
 
 // --- Firebase Config (Mocked) ---
-const firebaseConfig = { apiKey: "test", authDomain: "test", projectId: "test" };
+const firebaseConfig = {
+  apiKey: "AIzaSyDWYur0LAZpRgqKchb44hxSBh3BVAp-QB4",
+  authDomain: "lumiere-os.firebaseapp.com",
+  databaseURL: "https://lumiere-os-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "lumiere-os",
+  storageBucket: "lumiere-os.firebasestorage.app",
+  messagingSenderId: "688991040684",
+  appId: "1:688991040684:web:3f96e2c3b48e8cb9d95b09"
+};
+
 const app = initializeApp(firebaseConfig);
 
 // ============================================================================
