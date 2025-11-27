@@ -137,7 +137,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
       // --- 🔴 PASTE LINK VERCEL AWAK DI BAWAH INI ---
       const myVercelLink = "https://lumiere-os.vercel.app"; 
 
-      try { await fetch('https://ntfy.sh/lumiere_admin_access_6011', { method: 'POST', body: '🔔 Visitor requesting access!', headers: { 'Title': 'New Request', 'Priority': 'high', 'Click': myVercelLink } }); } catch(e) {}
+      try { await fetch('https://lumiere-obscura.vercel.app/', { method: 'POST', body: '🔔 Visitor requesting access!', headers: { 'Title': 'New Request', 'Priority': 'high', 'Click': myVercelLink } }); } catch(e) {}
   };
 
   const startPress = () => {
