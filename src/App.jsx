@@ -13,7 +13,7 @@ import HTMLFlipBook from 'react-pageflip';
 const firebaseConfig = { 
     apiKey: "AIzaSyDWYur0LAZpRgqKchb44hxSBh3BVAp-QB4",
   authDomain: "lumiere-os.firebaseapp.com",
-  databaseURL: "https://lumiere-os-default-rtdb.asia-southeast1.firebasedatabase.app",
+  databaseURL: "https://console.firebase.google.com/project/lumiere-os/database/lumiere-os-default-rtdb/data/~2F",
   projectId: "lumiere-os",
   storageBucket: "lumiere-os.firebasestorage.app",
   messagingSenderId: "688991040684",
