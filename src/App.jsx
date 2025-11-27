@@ -64,7 +64,7 @@ const Page = React.forwardRef((props, ref) => {
 });
 
 // ============================================================================
-// --- SECTION 2: FLIP VIEW ---
+// --- SECTION 2: FLIP VIEW (GREIGE + CALM MOTIF) ---
 // ============================================================================
 const FlipView = ({ pages, coverUrl, backCoverUrl, onClose, title }) => {
   const bookRef = useRef();
@@ -87,21 +87,48 @@ const FlipView = ({ pages, coverUrl, backCoverUrl, onClose, title }) => {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] w-screen h-screen flex flex-col items-center justify-center bg-[#121212] overflow-hidden animate-fade-in touch-none overscroll-none">
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+    // BACKGROUND: Warm Greige (#E6E4E0)
+    <div className="fixed inset-0 z-[100] w-screen h-screen flex flex-col items-center justify-center bg-[#E6E4E0] overflow-hidden animate-fade-in touch-none overscroll-none">
+        
+        {/* MOTIF: Subtle Dot Pattern (Macam Wallpaper Mewah) */}
+        <div 
+            className="absolute inset-0 opacity-10 pointer-events-none" 
+            style={{ 
+                backgroundImage: 'radial-gradient(#57534e 1px, transparent 1px), radial-gradient(#57534e 1px, transparent 1px)',
+                backgroundSize: '24px 24px',
+                backgroundPosition: '0 0, 12px 12px'
+            }}
+        ></div>
+
+        {/* VIGNETTE: Gelapkan bucu sikit supaya fokus ke tengah */}
+        <div className="absolute inset-0 bg-radial-gradient from-transparent to-[#D6D4D0]/60 pointer-events-none"></div>
+
+        {/* HEADER: Warna Gelap untuk Kontras */}
         <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-[60]">
-            <div className="px-4 py-2 md:px-6 md:py-2 rounded-full bg-black/40 border border-white/5 text-white shadow-xl backdrop-blur-md"><h2 className="font-sans font-bold text-xs md:text-sm tracking-wide uppercase truncate max-w-[200px] md:max-w-none text-white/80">{title}</h2></div>
-            <button onClick={onClose} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-black/40 hover:bg-red-500/20 text-white hover:text-red-400 flex items-center justify-center border border-white/5 backdrop-blur-md transition-colors"><X size={20}/></button>
+            <div className="px-6 py-2 rounded-full bg-white/60 border border-stone-300 text-stone-800 shadow-sm backdrop-blur-md">
+                <h2 className="font-serif font-bold text-xs md:text-sm tracking-widest uppercase truncate max-w-[200px] md:max-w-none">{title}</h2>
+            </div>
+            <button onClick={onClose} className="w-12 h-12 rounded-full bg-white/60 hover:bg-stone-200 text-stone-600 hover:text-red-500 flex items-center justify-center border border-stone-300 backdrop-blur-md transition-colors shadow-sm">
+                <X size={20}/>
+            </button>
         </div>
+        
+        {/* CONTAINER BUKU */}
         <div className="flex-1 w-full flex items-center justify-center p-2 md:p-4 overflow-hidden touch-none relative z-10">
-            {!isReady && (<div className="flex flex-col items-center gap-4 animate-pulse"><Loader2 className="animate-spin text-white/50" size={30} /><span className="text-white/30 text-[10px] tracking-[0.2em] uppercase">Opening Album</span></div>)}
+            {!isReady && (
+                <div className="flex flex-col items-center gap-4 animate-pulse">
+                    <Loader2 className="animate-spin text-stone-400" size={30} />
+                    <span className="text-stone-400 text-[10px] tracking-[0.2em] uppercase">Opening...</span>
+                </div>
+            )}
             {isReady && (
                 <HTMLFlipBook 
                     width={dimensions.width} height={dimensions.height} size="fixed" 
                     minWidth={300} maxWidth={600} minHeight={400} maxHeight={800} 
-                    maxShadowOpacity={0.5} showCover={true} mobileScrollSupport={false} 
+                    maxShadowOpacity={0.3} showCover={true} mobileScrollSupport={false} 
                     useMouseEvents={true} swipeDistance={10} clickEventForward={true}
-                    className="shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] animate-scale-up" 
+                    // SHADOW: Lembut & Natural
+                    className="shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] animate-scale-up" 
                     ref={bookRef} flippingTime={800} usePortrait={true} startZIndex={0} autoSize={true} showPageCorners={true} disableFlipByClick={false}
                 >
                     {finalPages.map((page, index) => (<Page key={index} url={page.url} pageNum={index} isCover={page.isCover} />))}
@@ -178,12 +205,11 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
 };
 
 // ============================================================================
-// --- SECTION 4: CAROUSEL (INFINITE LOOP & SWIPE) ---
+// --- SECTION 4: CAROUSEL (INFINITE + SWIPE) ---
 // ============================================================================
 const Carousel3D = ({ books, onSelect }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   
-  // ✅ INFINITE LOOP (Math.abs handling for negative)
   const nextSlide = () => setActiveIndex((prev) => (prev + 1) % books.length);
   const prevSlide = () => setActiveIndex((prev) => (prev - 1 + books.length) % books.length);
   
@@ -194,7 +220,6 @@ const Carousel3D = ({ books, onSelect }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeIndex, books]);
 
-  // TOUCH SWIPE LOGIC
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
   const onTouchStart = (e) => { setTouchEnd(null); setTouchStart(e.targetTouches[0].clientX); }
@@ -209,18 +234,13 @@ const Carousel3D = ({ books, onSelect }) => {
     >
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none select-none"><h1 className="text-[15vw] font-black tracking-tighter text-white/5 leading-none">LIBRARY</h1></div>
-        
-        {/* CAROUSEL (INFINITE) - BUTTONS HIDDEN */}
         <div className="relative w-full max-w-[1400px] h-[600px] flex items-center justify-center perspective-camera z-10 mt-10">
           <div className="relative w-full h-full flex items-center justify-center preserve-3d">
             {books.map((book, index) => {
-              // ✅ INFINITE WRAPPING VISUAL LOGIC
               let offset = index - activeIndex;
-              if (offset < -1.5) offset += books.length; // Adjusted threshold for smoother wrap
+              if (offset < -1.5) offset += books.length;
               if (offset > 1.5) offset -= books.length;
-              
               const isActive = offset === 0;
-              
               return (
                 <div key={book.id} className={`absolute w-[280px] md:w-[350px] aspect-[4/5] transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isActive ? 'cursor-pointer' : 'cursor-default pointer-events-none'}`} style={{ transform: `translateX(${offset * (window.innerWidth < 640 ? 280 : 380)}px) translateZ(${isActive ? 200 : -300}px) rotateY(${offset * -20}deg)`, zIndex: isActive ? 50 : 20 - Math.abs(offset), opacity: Math.abs(offset) > 2 ? 0 : 1 }} onClick={() => isActive ? onSelect(book) : (offset > 0 ? nextSlide() : prevSlide())}>
                   <div className={`w-full h-full bg-[#1e293b] rounded-xl overflow-hidden relative shadow-[0_30px_60px_-10px_rgba(0,0,0,0.6)] border border-white/10 transition-all duration-500 ${isActive ? 'brightness-105 scale-100 ring-1 ring-white/30' : 'brightness-50 grayscale scale-90'}`}><img src={book.coverUrl} className="w-full h-full object-cover" /><div className="absolute bottom-0 inset-x-0 p-6 md:p-8 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/80 to-transparent"><h3 className="text-2xl md:text-3xl font-serif font-bold text-white mb-1 md:mb-2 leading-tight drop-shadow-lg">{book.title}</h3><p className="text-[10px] md:text-xs text-indigo-300 uppercase tracking-[0.2em] font-medium">{book.pageCount} Pages</p></div></div>
@@ -229,14 +249,12 @@ const Carousel3D = ({ books, onSelect }) => {
             })}
           </div>
         </div>
-        
-        {/* HINT SWIPE (No buttons) */}
         <div className="absolute bottom-20 opacity-30 text-white text-[10px] uppercase tracking-widest animate-pulse pointer-events-none">Swipe or Scroll to Browse</div>
     </div>
   );
 };
 
-// ... (REST OF THE CODE: CreateStudio, Sidebar, SettingsModal, RequestsModal, LumierePro are here) ...
+// ... (SECTION 5, 6, 7 - SAME) ...
 const SettingsModal = ({ isOpen, onClose, securityEnabled, toggleSecurity }) => {if (!isOpen) return null;return (<div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in p-4"><div className="bg-[#1e293b] w-full max-w-sm md:w-96 p-6 rounded-2xl border border-white/10 shadow-2xl"><div className="flex justify-between items-center mb-6"><h3 className="text-white font-bold flex items-center gap-2"><Settings size={18}/> System Settings</h3><button onClick={onClose} className="text-slate-400 hover:text-white"><X size={18}/></button></div><div className="bg-[#0f172a] p-4 rounded-xl border border-white/5 mb-4"><div className="flex justify-between items-center"><div><p className="text-sm font-bold text-white mb-1">Visitor Remote Approval</p><p className="text-[10px] text-slate-400">Allow access via phone notification</p></div><button onClick={toggleSecurity} className={`w-12 h-6 rounded-full transition-colors relative ${securityEnabled ? 'bg-indigo-500' : 'bg-slate-600'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${securityEnabled ? 'left-7' : 'left-1'}`} /></button></div></div><p className="text-[10px] text-slate-500 text-center">Lumière OS v2.7 (Synced Master Switch)</p></div></div>)}
 const Sidebar = ({ userRole, onLogout, onStudio, openSettings, visitorRequest, openRequests }) => {const menuItems = [ { icon: BookOpen, label: 'Library', active: true }, { icon: Heart, label: 'Favorites', active: false }, { icon: Grid, label: 'Collections', active: false } ];return (<div className="fixed bottom-0 inset-x-0 h-20 md:h-screen md:w-[90px] md:static bg-[#1e293b]/90 md:bg-[#1e293b]/30 backdrop-blur-xl border-t md:border-t-0 md:border-r border-white/5 flex flex-row md:flex-col items-center justify-between md:justify-start px-6 md:px-0 md:py-8 gap-0 md:gap-8 z-50 shrink-0"><div className="hidden md:flex w-12 h-12 bg-gradient-to-br from-pink-500 to-violet-600 rounded-2xl items-center justify-center text-white mb-2 shadow-lg shadow-pink-500/20 animate-pulse-slow"><Camera size={24} strokeWidth={2.5}/></div><div className="flex flex-row md:flex-col gap-6 md:gap-6 w-full md:px-3 justify-center md:justify-start">{menuItems.map((item, idx) => (<button key={idx} className={`group relative flex items-center justify-center w-10 h-10 md:w-full md:aspect-square rounded-2xl transition-all duration-300 ${item.active ? 'bg-white text-slate-900 shadow-lg shadow-white/10' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}><item.icon size={20} md:size={22} strokeWidth={item.active ? 2.5 : 2} /></button>))}{userRole === 'editor' && (<button onClick={openRequests} className={`group relative flex items-center justify-center w-10 h-10 md:w-full md:aspect-square rounded-2xl transition-all duration-300 ${visitorRequest ? 'bg-red-500 text-white animate-bounce shadow-lg shadow-red-500/50' : 'text-slate-400 hover:text-white'}`}><Shield size={20} md:size={22} />{visitorRequest && <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 bg-white text-red-600 text-[8px] md:text-[10px] font-bold w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-full border-2 border-[#0f172a]">1</span>}</button>)}</div><div className="flex flex-row md:flex-col gap-4 md:gap-6 md:w-full md:px-3">{userRole === 'editor' && (<><button onClick={onStudio} className="hidden md:flex group w-full aspect-square rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white items-center justify-center shadow-lg shadow-indigo-500/30 hover:scale-105 transition-all"><Plus size={24} /></button><button onClick={openSettings} className="hidden md:flex group w-full aspect-square rounded-2xl text-slate-400 hover:bg-white/10 hover:text-white items-center justify-center transition-all"><Settings size={22} /></button></>)}<button onClick={onLogout} className="w-10 h-10 md:w-full md:aspect-square rounded-2xl text-slate-500 hover:bg-red-500/10 hover:text-red-400 flex items-center justify-center transition-all"><LogOut size={20} md:size={22} /></button></div></div>)}
 const RequestsModal = ({ isOpen, onClose, visitorRequest, onApprove, onDeny }) => {if (!isOpen) return null;return (<div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-fade-in p-4"><div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-2xl border border-white/10 shadow-2xl scale-100 animate-scale-up"><div className="flex justify-between items-center mb-6"><h3 className="text-white font-bold flex items-center gap-2"><Shield size={18}/> Access Requests</h3><button onClick={onClose} className="text-slate-400 hover:text-white"><X size={18}/></button></div>{!visitorRequest ? (<div className="flex flex-col items-center py-10 text-slate-500 border-2 border-dashed border-white/5 rounded-xl"><Shield size={40} className="mb-4 opacity-20"/><p className="text-sm font-medium">No pending requests</p><p className="text-[10px] mt-2 text-slate-600">System active & listening...</p></div>) : (<div className="bg-[#0f172a] p-6 rounded-xl border border-red-500/30 flex flex-col gap-4 animate-slide-up ring-1 ring-red-500/20"><div className="flex items-center gap-4"><div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400"><User size={24}/></div><div><p className="text-lg font-bold text-white">New Visitor</p><p className="text-xs text-red-400 font-bold animate-pulse uppercase tracking-wider">Waiting for action...</p></div></div><div className="flex gap-3 mt-2"><button onClick={onDeny} className="flex-1 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold text-sm border border-red-500/20">Deny</button><button onClick={onApprove} className="flex-1 h-12 rounded-xl bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all font-bold text-sm shadow-lg shadow-green-500/20">Approve Access</button></div></div>)}</div></div>)}
