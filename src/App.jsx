@@ -9,7 +9,7 @@ import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, onValue, update } from "firebase/database";
 import HTMLFlipBook from 'react-pageflip';
 
-// --- 🔴 PENTING: PASTE CONFIG FIREBASE AWAK DI SINI ---
+// --- 🔴 PASTE CONFIG FIREBASE SINI ---
 const firebaseConfig = { 
     apiKey: "AIzaSyDWYur0LAZpRgqKchb44hxSBh3BVAp-QB4",
   authDomain: "lumiere-os.firebaseapp.com",
@@ -88,41 +88,31 @@ const FlipView = ({ pages, coverUrl, backCoverUrl, onClose, title }) => {
 }
 
 // ============================================================================
-// --- SECTION 3: LANDING SCREEN (DENIED LOGIC ADDED) ---
+// --- SECTION 3: LANDING SCREEN ---
 // ============================================================================
 const LandingScreen = ({ onEnter, securityEnabled }) => {
   const [pinMode, setPinMode] = useState(false); 
   const [isRequesting, setIsRequesting] = useState(false); 
-  const [requestStatus, setRequestStatus] = useState("idle"); // idle, waiting, approved, denied
-  
+  const [requestStatus, setRequestStatus] = useState("idle"); 
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const [successMode, setSuccessMode] = useState(false); 
-  
   const [progress, setProgress] = useState(0);
   const [isPressing, setIsPressing] = useState(false);
   const animationRef = useRef(null);
 
-  // LISTENER STATUS (DENIED/APPROVED)
   useEffect(() => {
     if (requestStatus === "waiting") {
         const statusRef = ref(db, 'access/status');
         const unsubscribe = onValue(statusRef, (snapshot) => {
             const val = snapshot.val();
-            
             if (val === "approved") {
                 onEnter('visitor'); 
                 set(ref(db, 'access/status'), "locked"); 
-                
             } else if (val === "denied") {
-                setIsRequesting(false); // Tutup waiting screen
-                setRequestStatus("denied"); // Buka denied screen
-                
-                // Reset balik lepas 4 saat
-                setTimeout(() => {
-                    setRequestStatus("idle");
-                    set(ref(db, 'access/status'), "locked"); 
-                }, 4000);
+                setIsRequesting(false);
+                setRequestStatus("denied");
+                setTimeout(() => { setRequestStatus("idle"); set(ref(db, 'access/status'), "locked"); }, 4000);
             }
         });
         return () => unsubscribe();
@@ -134,10 +124,10 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
       setRequestStatus("waiting");
       set(ref(db, 'access/status'), "pending");
       
-      // --- 🔴 PASTE LINK VERCEL AWAK DI BAWAH INI ---
+      // --- 🔴 PASTE LINK VERCEL AWAK DI SINI ---
       const myVercelLink = "https://lumiere-os.vercel.app"; 
 
-      try { await fetch('https://ntfy.sh/lumiere_admin_access_6011', { method: 'POST', body: '🔔 Visitor requesting access!', headers: { 'Title': 'New Request', 'Priority': 'high', 'Click': 'https://lumiere-obscura.vercel.app' } }); } catch(e) {}
+      try { await fetch('https://ntfy.sh/lumiere_admin_access_6011', { method: 'POST', body: '🔔 Visitor waiting! Tap to open dashboard.', headers: { 'Title': 'Access Request', 'Priority': 'high', 'Click': myVercelLink } }); } catch(e) {}
   };
 
   const startPress = () => {
@@ -160,70 +150,27 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
   return (
     <div className="fixed inset-0 bg-[#f0f2f5] flex flex-col items-center justify-center font-sans select-none">
       <div className="absolute inset-0 overflow-hidden pointer-events-none"><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-purple-300/40 rounded-full blur-[100px]" /><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-pink-300/40 rounded-full blur-[80px] translate-y-20" /></div>
-      
       <div className="z-10 relative flex flex-col items-center w-full max-w-md">
-        
         {!successMode && !isRequesting && !pinMode && requestStatus !== "denied" && (
-             <div className="mb-10 animate-fade-in">
-                <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-violet-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-pink-500/20 mx-auto mb-6"><Camera className="text-white" size={32} strokeWidth={2.5} /></div>
-                <div className="text-center"><h1 className="text-4xl font-black text-slate-800 tracking-tight mb-2">Lumière OS</h1><p className="text-[10px] font-bold tracking-[0.3em] text-slate-400 uppercase">Select Your Journey</p></div>
-            </div>
+             <div className="mb-10 animate-fade-in"><div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-violet-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-pink-500/20 mx-auto mb-6"><Camera className="text-white" size={32} strokeWidth={2.5} /></div><div className="text-center"><h1 className="text-4xl font-black text-slate-800 tracking-tight mb-2">Lumière OS</h1><p className="text-[10px] font-bold tracking-[0.3em] text-slate-400 uppercase">Select Your Journey</p></div></div>
         )}
-
-        {/* BUTTONS */}
         {!pinMode && !successMode && !isRequesting && requestStatus !== "denied" && (
           <div className="flex gap-6 animate-slide-up">
-            <button onClick={() => setPinMode(true)} className="group w-36 h-44 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] flex flex-col items-center justify-center gap-4 hover:bg-white/60 hover:scale-105 transition-all duration-300 shadow-xl shadow-slate-200/50">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg group-hover:shadow-pink-500/30 transition-all"><Lock className="text-white" size={20} /></div>
-                <span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">Editor</span>
-            </button>
-            <button onMouseDown={securityEnabled ? startPress : () => onEnter('visitor')} onMouseUp={securityEnabled ? cancelPress : null} onMouseLeave={securityEnabled ? cancelPress : null} onTouchStart={securityEnabled ? startPress : () => onEnter('visitor')} onTouchEnd={securityEnabled ? cancelPress : null} className="group relative w-36 h-44 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] flex flex-col items-center justify-center gap-4 hover:bg-white/60 hover:scale-105 transition-all duration-300 shadow-xl shadow-slate-200/50 overflow-hidden">
-                <div className="absolute bottom-0 left-0 right-0 bg-violet-500/10 transition-all duration-75" style={{ height: `${progress}%` }} />
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-purple-500/30 transition-all relative z-10"><Eye className="text-white" size={20} /></div>
-                <div className="flex flex-col items-center z-10"><span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">Visitor</span>{securityEnabled && <span className="text-[8px] text-slate-400 uppercase mt-1">{progress > 0 ? "Hold..." : "Hold to Request"}</span>}</div>
-            </button>
+            <button onClick={() => setPinMode(true)} className="group w-36 h-44 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] flex flex-col items-center justify-center gap-4 hover:bg-white/60 hover:scale-105 transition-all duration-300 shadow-xl shadow-slate-200/50"><div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg group-hover:shadow-pink-500/30 transition-all"><Lock className="text-white" size={20} /></div><span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">Editor</span></button>
+            <button onMouseDown={securityEnabled ? startPress : () => onEnter('visitor')} onMouseUp={securityEnabled ? cancelPress : null} onMouseLeave={securityEnabled ? cancelPress : null} onTouchStart={securityEnabled ? startPress : () => onEnter('visitor')} onTouchEnd={securityEnabled ? cancelPress : null} className="group relative w-36 h-44 bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] flex flex-col items-center justify-center gap-4 hover:bg-white/60 hover:scale-105 transition-all duration-300 shadow-xl shadow-slate-200/50 overflow-hidden"><div className="absolute bottom-0 left-0 right-0 bg-violet-500/10 transition-all duration-75" style={{ height: `${progress}%` }} /><div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg group-hover:shadow-purple-500/30 transition-all relative z-10"><Eye className="text-white" size={20} /></div><div className="flex flex-col items-center z-10"><span className="text-[11px] font-bold text-slate-600 tracking-wider uppercase">Visitor</span>{securityEnabled && <span className="text-[8px] text-slate-400 uppercase mt-1">{progress > 0 ? "Hold..." : "Hold to Request"}</span>}</div></button>
           </div>
         )}
-
-        {/* WAITING SCREEN */}
         {isRequesting && requestStatus === "waiting" && (
-          <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4 text-center">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg mb-6 relative"><div className="absolute inset-0 rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin" /><Smartphone size={24} className="text-slate-400"/></div>
-            <h3 className="text-slate-800 text-xl font-black mb-2">Approval Required</h3>
-            <p className="text-sm text-slate-500 leading-relaxed mb-8">Notification sent to Owner.<br/>Waiting for remote unlock...</p>
-            <button onClick={() => {setIsRequesting(false); setRequestStatus("idle");}} className="text-xs text-slate-400 font-bold tracking-widest uppercase hover:text-slate-600 py-2">Cancel</button>
-          </div>
+          <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4 text-center"><div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg mb-6 relative"><div className="absolute inset-0 rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin" /><Smartphone size={24} className="text-slate-400"/></div><h3 className="text-slate-800 text-xl font-black mb-2">Approval Required</h3><p className="text-sm text-slate-500 leading-relaxed mb-8">Notification sent to Owner.<br/>Waiting for remote unlock...</p><button onClick={() => {setIsRequesting(false); setRequestStatus("idle");}} className="text-xs text-slate-400 font-bold tracking-widest uppercase hover:text-slate-600 py-2">Cancel</button></div>
         )}
-
-        {/* DENIED SCREEN (MERAH & GEGAR) */}
         {requestStatus === "denied" && (
-          <div className="flex flex-col items-center animate-bounce bg-red-50/90 backdrop-blur-xl border border-red-200 p-12 rounded-[2.5rem] shadow-2xl shadow-red-500/20 w-full mx-4 text-center">
-            <div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center shadow-lg mb-6 text-white"><AlertCircle size={40} strokeWidth={3}/></div>
-            <h3 className="text-red-900 text-2xl font-black mb-2 uppercase tracking-wide">Access Denied</h3>
-            <p className="text-sm text-red-700 font-medium leading-relaxed">Your request was declined by the owner.</p>
-          </div>
+          <div className="flex flex-col items-center animate-bounce bg-red-50/90 backdrop-blur-xl border border-red-200 p-12 rounded-[2.5rem] shadow-2xl shadow-red-500/20 w-full mx-4 text-center"><div className="w-20 h-20 bg-red-500 rounded-full flex items-center justify-center shadow-lg mb-6 text-white"><AlertCircle size={40} strokeWidth={3}/></div><h3 className="text-red-900 text-2xl font-black mb-2 uppercase tracking-wide">Access Denied</h3><p className="text-sm text-red-700 font-medium leading-relaxed">Your request was declined.</p></div>
         )}
-
-        {/* EDITOR PIN */}
         {pinMode && !successMode && (
-          <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4">
-            <h3 className="text-slate-800 text-xl font-bold mb-1">Editor Access</h3>
-            <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-8">Enter Passcode</p>
-            <div className="flex gap-3 mb-10">{[0,1,2,3,4,5].map((_, i) => (<div key={i} className={`w-3 h-3 rounded-full transition-all duration-300 ${pin.length > i ? 'bg-gradient-to-br from-pink-500 to-rose-600 scale-125' : 'bg-slate-300'}`} />))}</div>
-            <input autoFocus type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} value={pin} onChange={(e) => { const val = e.target.value; if (!/^\d*$/.test(val)) return; setPin(val); if(val.length === 6) handleEditorLogin(val); }} className="opacity-0 absolute inset-0 cursor-pointer h-full w-full z-50" />
-            {error && <p className="text-rose-500 text-xs font-bold uppercase animate-pulse mb-4">Incorrect PIN</p>}
-            <button onClick={() => {setPinMode(false); setPin("");}} className="mt-2 px-6 py-2 rounded-full border border-slate-300 text-xs font-bold text-slate-400 hover:text-slate-800 hover:bg-white uppercase tracking-widest transition-all z-50">Cancel</button>
-          </div>
+          <div className="flex flex-col items-center animate-slide-up bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 w-full mx-4"><h3 className="text-slate-800 text-xl font-bold mb-1">Editor Access</h3><p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase mb-8">Enter Passcode</p><div className="flex gap-3 mb-10">{[0,1,2,3,4,5].map((_, i) => (<div key={i} className={`w-3 h-3 rounded-full transition-all duration-300 ${pin.length > i ? 'bg-gradient-to-br from-pink-500 to-rose-600 scale-125' : 'bg-slate-300'}`} />))}</div><input autoFocus type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} value={pin} onChange={(e) => { const val = e.target.value; if (!/^\d*$/.test(val)) return; setPin(val); if(val.length === 6) handleEditorLogin(val); }} className="opacity-0 absolute inset-0 cursor-pointer h-full w-full z-50" />{error && <p className="text-rose-500 text-xs font-bold uppercase animate-pulse mb-4">Incorrect PIN</p>}<button onClick={() => {setPinMode(false); setPin("");}} className="mt-2 px-6 py-2 rounded-full border border-slate-300 text-xs font-bold text-slate-400 hover:text-slate-800 hover:bg-white uppercase tracking-widest transition-all z-50">Cancel</button></div>
         )}
-
-        {/* SUCCESS */}
         {successMode && (
-          <div className="flex flex-col items-center animate-scale-up text-center bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl">
-            <div className="w-24 h-24 bg-gradient-to-br from-pink-500 to-violet-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-pink-500/30 mb-8"><Camera className="text-white" size={40} strokeWidth={2.5} /></div>
-            <h1 className="text-3xl font-black text-slate-800 mb-2">Welcome, Editor</h1>
-            <p className="text-sm text-slate-500 font-medium mb-12">You are now inside the Lumière System.</p>
-            <div className="flex flex-col gap-4 w-64"><button onClick={() => onEnter('editor')} className="px-8 py-4 bg-slate-900 text-white rounded-full font-bold text-xs tracking-[0.2em] hover:bg-black hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-2 uppercase">Enter System <ArrowRight size={14}/></button><button onClick={handleLogout} className="px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-full font-bold text-xs tracking-[0.2em] hover:bg-slate-50 transition-all shadow-sm uppercase">Log Out</button></div>
-          </div>
+          <div className="flex flex-col items-center animate-scale-up text-center bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-2xl"><div className="w-24 h-24 bg-gradient-to-br from-pink-500 to-violet-600 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-pink-500/30 mb-8"><Camera className="text-white" size={40} strokeWidth={2.5} /></div><h1 className="text-3xl font-black text-slate-800 mb-2">Welcome, Editor</h1><p className="text-sm text-slate-500 font-medium mb-12">You are now inside the Lumière System.</p><div className="flex flex-col gap-4 w-64"><button onClick={() => onEnter('editor')} className="px-8 py-4 bg-slate-900 text-white rounded-full font-bold text-xs tracking-[0.2em] hover:bg-black hover:scale-105 transition-all shadow-xl flex items-center justify-center gap-2 uppercase">Enter System <ArrowRight size={14}/></button><button onClick={handleLogout} className="px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-full font-bold text-xs tracking-[0.2em] hover:bg-slate-50 transition-all shadow-sm uppercase">Log Out</button></div></div>
         )}
       </div>
     </div>
