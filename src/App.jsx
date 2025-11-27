@@ -125,7 +125,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
       set(ref(db, 'access/status'), "pending");
       
       // --- 🔴 PASTE LINK VERCEL AWAK DI SINI ---
-      const myVercelLink = "https://lumiere-os.vercel.app"; 
+      const myVercelLink = "https://lumiere-obscura.vercel.app"; 
 
       try { await fetch('https://ntfy.sh/lumiere_admin_access_6011', { method: 'POST', body: '🔔 Visitor waiting! Tap to open dashboard.', headers: { 'Title': 'Access Request', 'Priority': 'high', 'Click': 'https://lumiere-obscura.vercel.app' } }); } catch(e) {}
   };
