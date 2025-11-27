@@ -64,7 +64,7 @@ const Page = React.forwardRef((props, ref) => {
 });
 
 // ============================================================================
-// --- SECTION 2: FLIP VIEW (SWIPE FIX: TOUCH-ACTION NONE) ---
+// --- SECTION 2: FLIP VIEW (MOBILE SWIPE MASTER FIX) ---
 // ============================================================================
 const FlipView = ({ pages, coverUrl, backCoverUrl, onClose, title }) => {
   const bookRef = useRef();
@@ -77,8 +77,12 @@ const FlipView = ({ pages, coverUrl, backCoverUrl, onClose, title }) => {
 
   useEffect(() => {
       const handleResize = () => {
-          if (window.innerWidth < 640) { setDimensions({ width: window.innerWidth - 20, height: (window.innerWidth - 20) * 1.4 }); } 
-          else if (window.innerWidth < 1024) { setDimensions({ width: 350, height: 500 }); } 
+          const w = window.innerWidth;
+          // MOBILE: Pakai lebar penuh skrin (tolak sikit margin) supaya senang swipe
+          if (w < 640) { setDimensions({ width: w - 20, height: (w - 20) * 1.45 }); } 
+          // TABLET:
+          else if (w < 1024) { setDimensions({ width: 380, height: 550 }); } 
+          // DESKTOP:
           else { setDimensions({ width: 450, height: 600 }); }
       };
       handleResize(); window.addEventListener('resize', handleResize);
@@ -87,40 +91,53 @@ const FlipView = ({ pages, coverUrl, backCoverUrl, onClose, title }) => {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[100] w-screen h-screen flex flex-col items-center justify-center bg-[#0f172a]/98 backdrop-blur-xl overflow-hidden animate-fade-in">
+    <div className="fixed inset-0 z-[100] w-screen h-screen flex flex-col items-center justify-center bg-[#0f172a]/98 backdrop-blur-xl overflow-hidden animate-fade-in touch-none">
+        {/* HEADER */}
         <div className="absolute top-0 left-0 right-0 p-4 md:p-6 flex justify-between items-center z-[60]">
             <div className="px-4 py-2 md:px-6 md:py-2 rounded-full bg-slate-900/50 border border-white/10 text-white shadow-xl backdrop-blur-md"><h2 className="font-sans font-bold text-xs md:text-sm tracking-wide uppercase truncate max-w-[200px] md:max-w-none">{title}</h2></div>
             <button onClick={onClose} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-900/50 hover:bg-red-500/20 text-white hover:text-red-400 flex items-center justify-center border border-white/10 backdrop-blur-md transition-colors"><X size={20}/></button>
         </div>
         
-        {/* --- TOUCH-NONE & OVERSCROLL-NONE (INI RAHSIA SWIPE) --- */}
-        <div className="flex-1 w-full flex items-center justify-center p-2 md:p-4 overflow-hidden touch-none overscroll-none">
+        {/* CONTAINER - TOUCH NONE PENTING SUPAYA BROWSER TAK SCROLL */}
+        <div className="flex-1 w-full flex items-center justify-center p-2 overflow-hidden touch-none">
             {!isReady && (<div className="flex flex-col items-center gap-4 animate-pulse"><Loader2 className="animate-spin text-white/50" size={30} /><span className="text-white/30 text-[10px] tracking-[0.2em] uppercase">Opening Album</span></div>)}
+            
             {isReady && (
                 <HTMLFlipBook 
-                    width={dimensions.width} height={dimensions.height} size="fixed" 
+                    width={dimensions.width} height={dimensions.height} 
+                    size="fixed" 
                     minWidth={300} maxWidth={600} minHeight={400} maxHeight={800} 
-                    maxShadowOpacity={0.5} showCover={true} 
+                    maxShadowOpacity={0.5} 
+                    showCover={true} 
                     
-                    // SETTING WAJIB UNTUK TABLET/PHONE
-                    mobileScrollSupport={false} // Matikan scroll page
-                    useMouseEvents={true}       // Benarkan sentuhan
-                    swipeDistance={10}          // Sangat sensitif
+                    // --- MOBILE SWIPE SETTINGS ---
+                    mobileScrollSupport={false} // Matikan scroll website bila sentuh buku
+                    useMouseEvents={true}       // Guna mouse event untuk touch
+                    swipeDistance={10}          // Sensitif: Gerak jari 10px je dah detect swipe
                     clickEventForward={true}
-                    
-                    className="shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] animate-scale-up" 
-                    ref={bookRef} flippingTime={800} usePortrait={true} startZIndex={0} autoSize={true} showPageCorners={true} disableFlipByClick={false}
+                    usePortrait={true}          // Single page di mobile (wajib untuk swipe senang)
+                    startZIndex={0} 
+                    autoSize={true} 
+                    showPageCorners={true} 
+                    disableFlipByClick={false}  // Boleh click juga selain swipe
+                    className="shadow-2xl animate-scale-up" 
+                    ref={bookRef} flippingTime={800} 
                 >
                     {finalPages.map((page, index) => (<Page key={index} url={page.url} pageNum={index} isCover={page.isCover} />))}
                 </HTMLFlipBook>
             )}
+        </div>
+        
+        {/* HINT UTK USER */}
+        <div className="absolute bottom-10 inset-x-0 flex justify-center pointer-events-none opacity-50">
+            <span className="text-[10px] text-white uppercase tracking-widest bg-black/20 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">Swipe Corners to Flip</span>
         </div>
     </div>
   );
 }
 
 // ============================================================================
-// --- SECTION 3: LANDING SCREEN (HQ LOGIC) ---
+// --- SECTION 3: LANDING SCREEN (SYNCED SECURITY) ---
 // ============================================================================
 const LandingScreen = ({ onEnter, securityEnabled }) => {
   const [pinMode, setPinMode] = useState(false); 
@@ -134,7 +151,8 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
   const animationRef = useRef(null);
 
   useEffect(() => {
-    if (requestStatus === "waiting") {
+    // Hanya dengar request status kalau security ON dan sedang menunggu
+    if (requestStatus === "waiting" && securityEnabled) {
         const statusRef = ref(db, 'access/status');
         const unsubscribe = onValue(statusRef, (snapshot) => {
             const val = snapshot.val();
@@ -143,7 +161,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
         });
         return () => unsubscribe();
     }
-  }, [requestStatus]);
+  }, [requestStatus, securityEnabled]);
 
   const sendAccessRequest = async () => {
       setIsRequesting(true); setRequestStatus("waiting"); set(ref(db, 'access/status'), "pending");
@@ -151,22 +169,19 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
       try { await fetch('https://ntfy.sh/lumiere_admin_access_6011', { method: 'POST', body: '🔔 Visitor waiting! Tap to open dashboard.', headers: { 'Title': 'Access Request', 'Priority': 'high', 'Click': myVercelLink } }); } catch(e) {}
   };
 
-  // LOGIC HOLD BUTTON
   const startPress = () => {
-      if (!securityEnabled) return; // Kalau OFF, tak payah hold
+      if (!securityEnabled) return; 
       setIsPressing(true); let start = Date.now();
       const animate = () => { let now = Date.now(); let p = Math.min((now - start) / 1500 * 100, 100); setProgress(p); if (p < 100) { animationRef.current = requestAnimationFrame(animate); } else { sendAccessRequest(); } };
       animationRef.current = requestAnimationFrame(animate);
   }
   const cancelPress = () => { setIsPressing(false); setProgress(0); if (animationRef.current) cancelAnimationFrame(animationRef.current); }
   
-  // LOGIC CLICK BUTTON (Ini Kunci HQ)
+  // LOGIK BUTTON UTAMA: Kalau Security OFF, terus masuk
   const handleVisitorClick = () => {
-      // Kalau Security OFF (False), TERUS MASUK
       if (securityEnabled === false) {
           onEnter('visitor');
       }
-      // Kalau Security ON (True), kena guna Hold (startPress di atas)
   }
 
   const handleEditorLogin = (inputPin) => { if (inputPin === "767707") { setError(false); setPinMode(false); setSuccessMode(true); } else { setError(true); setTimeout(() => { setError(false); setPin(""); }, 500); } };
@@ -192,26 +207,19 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
                 <span className="text-[10px] md:text-[11px] font-bold text-slate-600 tracking-wider uppercase">Editor</span>
             </button>
             
-            {/* VISITOR BUTTON (HQ LOGIC) */}
             <button 
-                // Logik Utama: Kalau OFF, click biasa. Kalau ON, click tak jalan (kena hold)
                 onClick={handleVisitorClick}
-                
-                // Logik Hold: Hanya jalan kalau Security ON
                 onMouseDown={securityEnabled ? startPress : null} 
                 onMouseUp={securityEnabled ? cancelPress : null} 
                 onMouseLeave={securityEnabled ? cancelPress : null} 
                 onTouchStart={securityEnabled ? startPress : null} 
                 onTouchEnd={securityEnabled ? cancelPress : null} 
-                
                 className={`group relative w-32 h-40 md:w-36 md:h-44 backdrop-blur-xl border border-white/60 rounded-[1.5rem] md:rounded-[2rem] flex flex-col items-center justify-center gap-3 md:gap-4 hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl shadow-slate-200/50 overflow-hidden ${securityEnabled ? 'bg-white/40 hover:bg-white/60' : 'bg-green-500/10 border-green-500/20 hover:bg-green-500/20'}`}
             >
                 {securityEnabled && <div className="absolute bottom-0 left-0 right-0 bg-violet-500/10 transition-all duration-75" style={{ height: `${progress}%` }} />}
-                
                 <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all relative z-10 ${securityEnabled ? 'bg-gradient-to-br from-violet-500 to-purple-600' : 'bg-green-500'}`}>
                     {securityEnabled ? <Eye className="text-white" size={18} md:size={20} /> : <Unlock className="text-white" size={18} md:size={20} />}
                 </div>
-                
                 <div className="flex flex-col items-center z-10">
                     <span className="text-[10px] md:text-[11px] font-bold text-slate-600 tracking-wider uppercase">Visitor</span>
                     <span className={`text-[7px] md:text-[8px] uppercase mt-1 font-bold ${securityEnabled ? 'text-slate-400' : 'text-green-600'}`}>
@@ -267,7 +275,7 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
 };
 
 // ============================================================================
-// --- SECTION 4 & 5: STUDIO, CAROUSEL & SETTINGS (SAME) ---
+// --- SECTION 4 & 5: STUDIO, CAROUSEL & SETTINGS (SYNCED TOGGLE) ---
 // ============================================================================
 const CreateStudio = ({ onClose, title, setTitle, audio, setAudio, pages, setPages, cover, setCover, backCover, setBackCover, onUploadPages, onUploadCover, onUploadBackCover, onPublish, isSaving, statusMsg }) => {return (<div className="fixed inset-0 z-50 bg-[#0f172a] text-white font-sans animate-slide-up flex flex-col h-[100dvh]"><div className="h-16 md:h-20 shrink-0 border-b border-white/5 flex items-center justify-between px-4 md:px-8 bg-[#0f172a]/90 backdrop-blur-md z-20"><div className="flex items-center gap-3 md:gap-4"><button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg transition-colors"><X size={20} md:size={24}/></button><h1 className="text-lg md:text-xl font-serif italic text-slate-200">Studio Editor</h1></div><button onClick={onPublish} disabled={isSaving} className="text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 font-medium rounded-lg text-xs md:text-sm px-4 md:px-6 py-2 md:py-2.5 text-center flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/20">{isSaving ? <Loader2 className="animate-spin" size={16}/> : <><Save size={16} className="hidden md:block"/> Publish</>}</button></div><div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0 relative"><div className="w-full md:w-96 border-b md:border-b-0 md:border-r border-white/5 bg-[#1e293b]/50 flex flex-col z-10 shrink-0 backdrop-blur-sm h-1/3 md:h-auto"><div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-hide"><h2 className="text-xs md:text-sm font-bold uppercase tracking-widest text-slate-400 mb-4 md:mb-6 flex items-center gap-2 sticky top-0 py-2 z-10"><Edit3 size={14}/> Book Details</h2><div className="space-y-4 md:space-y-6 pb-10"><div><label className="block mb-2 text-xs md:text-sm font-bold text-slate-400">Title</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="bg-slate-900/50 border border-slate-700 text-white text-xs md:text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="Untitled Album" /></div><div className="grid grid-cols-2 gap-3 md:gap-4">{[{label: "Front", img: cover, func: onUploadCover}, {label: "Back", img: backCover, func: onUploadBackCover}].map((item, idx) => (<div key={idx} className="bg-slate-900/50 p-2 md:p-3 rounded-xl border border-white/5"><label className="block mb-2 text-[8px] md:text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.label}</label><div className="relative aspect-[3/4] bg-[#0f172a] rounded-lg border-2 border-dashed border-slate-700 flex items-center justify-center overflow-hidden group hover:border-slate-500 transition-colors">{item.img ? <img src={item.img} className="w-full h-full object-cover" /> : <div className="text-center text-slate-600"><ImageIcon size={16} md:size={20} className="mx-auto mb-1" /></div>}<label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity"><input type="file" className="hidden" accept="image/*" onChange={item.func} /><Plus className="text-white bg-white/20 rounded-full p-1" size={20}/></label></div></div>))}</div><div><label className="block mb-2 text-xs md:text-sm font-bold text-slate-400">Audio URL</label><input type="url" value={audio} onChange={(e) => setAudio(e.target.value)} className="bg-slate-900/50 border border-slate-700 text-white text-xs md:text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" placeholder="https://..." /></div>{statusMsg && <div className="p-3 mb-4 text-xs text-cyan-200 rounded-lg bg-cyan-900/20 border border-cyan-800 flex items-center gap-2"><Loader2 size={12} className="animate-spin"/> {statusMsg}</div>}</div></div></div><div className="flex-1 bg-[#0f172a] relative flex flex-col min-h-0"><div className="flex-1 overflow-y-auto p-4 md:p-8 pb-32"><div className="flex justify-between items-center mb-4 md:mb-6 sticky top-0 z-10 bg-[#0f172a]/90 backdrop-blur-md py-4 border-b border-white/5"><h3 className="text-lg md:text-xl font-bold text-slate-200">Pages Gallery</h3><label className="cursor-pointer bg-white text-black px-4 md:px-5 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-bold flex items-center gap-2 hover:bg-slate-200 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"><Plus size={14} md:size={16}/> Add Photos<input type="file" multiple accept="image/*" className="hidden" onChange={onUploadPages} /></label></div><div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">{pages.map((page, idx) => (<div key={idx} className="relative group aspect-[4/5] rounded-xl overflow-hidden border border-white/5 bg-slate-800 shadow-xl hover:ring-2 hover:ring-indigo-500 transition-all duration-300"><img src={page.url} className="w-full h-full object-cover" alt={`Page ${idx}`} /><button onClick={() => setPages(p => p.filter((_, i) => i !== idx))} className="absolute top-2 right-2 p-1.5 md:p-2 bg-red-500/80 rounded-full text-white opacity-100 md:opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-lg"><Trash2 size={12} md:size={14}/></button></div>))}</div></div></div></div></div>);};
 const Carousel3D = ({ books, onSelect }) => {const [activeIndex, setActiveIndex] = useState(0);const nextSlide = () => setActiveIndex((prev) => (prev + 1) % books.length);const prevSlide = () => setActiveIndex((prev) => (prev - 1 + books.length) % books.length);useEffect(() => {const handleKeyDown = (e) => { if (e.key === 'ArrowRight') nextSlide(); if (e.key === 'ArrowLeft') prevSlide(); if (e.key === 'Enter') onSelect(books[activeIndex]); };window.addEventListener('keydown', handleKeyDown); return () => window.removeEventListener('keydown', handleKeyDown);}, [activeIndex, books]);return (<div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden"><div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[120px] pointer-events-none" /><div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none select-none"><h1 className="text-[15vw] font-black tracking-tighter text-white/5 leading-none">LIBRARY</h1></div><div className="relative w-full max-w-[1400px] h-[600px] flex items-center justify-center perspective-camera z-10 mt-10"><div className="relative w-full h-full flex items-center justify-center preserve-3d">{books.map((book, index) => {let offset = index - activeIndex;if (offset < -2) offset += books.length; if (offset > 2) offset -= books.length;const isActive = offset === 0;return (<div key={book.id} className={`absolute w-[280px] md:w-[350px] aspect-[4/5] transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${isActive ? 'cursor-pointer' : 'cursor-default pointer-events-none'}`} style={{ transform: `translateX(${offset * (window.innerWidth < 640 ? 280 : 380)}px) translateZ(${isActive ? 200 : -300}px) rotateY(${offset * -20}deg)`, zIndex: isActive ? 50 : 20 - Math.abs(offset), opacity: Math.abs(offset) > 2 ? 0 : 1 }} onClick={() => isActive ? onSelect(book) : (offset > 0 ? nextSlide() : prevSlide())}><div className={`w-full h-full bg-[#1e293b] rounded-xl overflow-hidden relative shadow-[0_30px_60px_-10px_rgba(0,0,0,0.6)] border border-white/10 transition-all duration-500 ${isActive ? 'brightness-105 scale-100 ring-1 ring-white/30' : 'brightness-50 grayscale scale-90'}`}><img src={book.coverUrl} className="w-full h-full object-cover" /><div className="absolute bottom-0 inset-x-0 p-6 md:p-8 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/80 to-transparent"><h3 className="text-2xl md:text-3xl font-serif font-bold text-white mb-1 md:mb-2 leading-tight drop-shadow-lg">{book.title}</h3><p className="text-[10px] md:text-xs text-indigo-300 uppercase tracking-[0.2em] font-medium">{book.pageCount} Pages</p></div></div></div>);})}</div></div><div className="flex items-center gap-6 md:gap-8 mt-8 md:mt-12 z-50"><button onClick={prevSlide} className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/5 hover:bg-white/20 border border-white/10 flex items-center justify-center text-white transition-all shadow-lg hover:scale-110 active:scale-95"><ChevronLeft size={20} md:size={24}/></button><button onClick={nextSlide} className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-white/5 hover:bg-white/20 border border-white/10 flex items-center justify-center text-white transition-all shadow-lg hover:scale-110 active:scale-95"><ChevronRight size={20} md:size={24}/></button></div></div>);};
