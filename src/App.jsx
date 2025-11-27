@@ -9,7 +9,7 @@ import { initializeApp } from 'firebase/app';
 import { getDatabase, ref, set, onValue, update } from "firebase/database";
 import HTMLFlipBook from 'react-pageflip';
 
-// --- ✅ FIREBASE CONFIG (DAH DIISI) ---
+// --- 🔴 PASTE CONFIG FIREBASE SINI ---
 const firebaseConfig = { 
     apiKey: "AIzaSyDWYur0LAZpRgqKchb44hxSBh3BVAp-QB4",
     authDomain: "lumiere-os.firebaseapp.com",
@@ -64,7 +64,7 @@ const Page = React.forwardRef((props, ref) => {
 });
 
 // ============================================================================
-// --- SECTION 2: FLIP VIEW (SWIPE + CALM BG) ---
+// --- SECTION 2: FLIP VIEW ---
 // ============================================================================
 const FlipView = ({ pages, coverUrl, backCoverUrl, onClose, title }) => {
   const bookRef = useRef();
@@ -178,12 +178,12 @@ const LandingScreen = ({ onEnter, securityEnabled }) => {
 };
 
 // ============================================================================
-// --- SECTION 4: CAROUSEL (INFINITE LOOP RESTORED) ---
+// --- SECTION 4: CAROUSEL (INFINITE LOOP & SWIPE) ---
 // ============================================================================
 const Carousel3D = ({ books, onSelect }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   
-  // ✅ INFINITE LOOP (Modulo Math)
+  // ✅ INFINITE LOOP (Math.abs handling for negative)
   const nextSlide = () => setActiveIndex((prev) => (prev + 1) % books.length);
   const prevSlide = () => setActiveIndex((prev) => (prev - 1 + books.length) % books.length);
   
@@ -210,14 +210,14 @@ const Carousel3D = ({ books, onSelect }) => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-900/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute inset-0 flex items-center justify-center z-0 pointer-events-none select-none"><h1 className="text-[15vw] font-black tracking-tighter text-white/5 leading-none">LIBRARY</h1></div>
         
-        {/* CAROUSEL (INFINITE) */}
+        {/* CAROUSEL (INFINITE) - BUTTONS HIDDEN */}
         <div className="relative w-full max-w-[1400px] h-[600px] flex items-center justify-center perspective-camera z-10 mt-10">
           <div className="relative w-full h-full flex items-center justify-center preserve-3d">
             {books.map((book, index) => {
               // ✅ INFINITE WRAPPING VISUAL LOGIC
               let offset = index - activeIndex;
-              if (offset < -2) offset += books.length;
-              if (offset > 2) offset -= books.length;
+              if (offset < -1.5) offset += books.length; // Adjusted threshold for smoother wrap
+              if (offset > 1.5) offset -= books.length;
               
               const isActive = offset === 0;
               
@@ -229,12 +229,14 @@ const Carousel3D = ({ books, onSelect }) => {
             })}
           </div>
         </div>
+        
+        {/* HINT SWIPE (No buttons) */}
         <div className="absolute bottom-20 opacity-30 text-white text-[10px] uppercase tracking-widest animate-pulse pointer-events-none">Swipe or Scroll to Browse</div>
     </div>
   );
 };
 
-// ... (SECTION 5, 6, 7 SAMA MACAM SEBELUM NI) ...
+// ... (REST OF THE CODE: CreateStudio, Sidebar, SettingsModal, RequestsModal, LumierePro are here) ...
 const SettingsModal = ({ isOpen, onClose, securityEnabled, toggleSecurity }) => {if (!isOpen) return null;return (<div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in p-4"><div className="bg-[#1e293b] w-full max-w-sm md:w-96 p-6 rounded-2xl border border-white/10 shadow-2xl"><div className="flex justify-between items-center mb-6"><h3 className="text-white font-bold flex items-center gap-2"><Settings size={18}/> System Settings</h3><button onClick={onClose} className="text-slate-400 hover:text-white"><X size={18}/></button></div><div className="bg-[#0f172a] p-4 rounded-xl border border-white/5 mb-4"><div className="flex justify-between items-center"><div><p className="text-sm font-bold text-white mb-1">Visitor Remote Approval</p><p className="text-[10px] text-slate-400">Allow access via phone notification</p></div><button onClick={toggleSecurity} className={`w-12 h-6 rounded-full transition-colors relative ${securityEnabled ? 'bg-indigo-500' : 'bg-slate-600'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${securityEnabled ? 'left-7' : 'left-1'}`} /></button></div></div><p className="text-[10px] text-slate-500 text-center">Lumière OS v2.7 (Synced Master Switch)</p></div></div>)}
 const Sidebar = ({ userRole, onLogout, onStudio, openSettings, visitorRequest, openRequests }) => {const menuItems = [ { icon: BookOpen, label: 'Library', active: true }, { icon: Heart, label: 'Favorites', active: false }, { icon: Grid, label: 'Collections', active: false } ];return (<div className="fixed bottom-0 inset-x-0 h-20 md:h-screen md:w-[90px] md:static bg-[#1e293b]/90 md:bg-[#1e293b]/30 backdrop-blur-xl border-t md:border-t-0 md:border-r border-white/5 flex flex-row md:flex-col items-center justify-between md:justify-start px-6 md:px-0 md:py-8 gap-0 md:gap-8 z-50 shrink-0"><div className="hidden md:flex w-12 h-12 bg-gradient-to-br from-pink-500 to-violet-600 rounded-2xl items-center justify-center text-white mb-2 shadow-lg shadow-pink-500/20 animate-pulse-slow"><Camera size={24} strokeWidth={2.5}/></div><div className="flex flex-row md:flex-col gap-6 md:gap-6 w-full md:px-3 justify-center md:justify-start">{menuItems.map((item, idx) => (<button key={idx} className={`group relative flex items-center justify-center w-10 h-10 md:w-full md:aspect-square rounded-2xl transition-all duration-300 ${item.active ? 'bg-white text-slate-900 shadow-lg shadow-white/10' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}><item.icon size={20} md:size={22} strokeWidth={item.active ? 2.5 : 2} /></button>))}{userRole === 'editor' && (<button onClick={openRequests} className={`group relative flex items-center justify-center w-10 h-10 md:w-full md:aspect-square rounded-2xl transition-all duration-300 ${visitorRequest ? 'bg-red-500 text-white animate-bounce shadow-lg shadow-red-500/50' : 'text-slate-400 hover:text-white'}`}><Shield size={20} md:size={22} />{visitorRequest && <span className="absolute -top-1 -right-1 md:-top-2 md:-right-2 bg-white text-red-600 text-[8px] md:text-[10px] font-bold w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-full border-2 border-[#0f172a]">1</span>}</button>)}</div><div className="flex flex-row md:flex-col gap-4 md:gap-6 md:w-full md:px-3">{userRole === 'editor' && (<><button onClick={onStudio} className="hidden md:flex group w-full aspect-square rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white items-center justify-center shadow-lg shadow-indigo-500/30 hover:scale-105 transition-all"><Plus size={24} /></button><button onClick={openSettings} className="hidden md:flex group w-full aspect-square rounded-2xl text-slate-400 hover:bg-white/10 hover:text-white items-center justify-center transition-all"><Settings size={22} /></button></>)}<button onClick={onLogout} className="w-10 h-10 md:w-full md:aspect-square rounded-2xl text-slate-500 hover:bg-red-500/10 hover:text-red-400 flex items-center justify-center transition-all"><LogOut size={20} md:size={22} /></button></div></div>)}
 const RequestsModal = ({ isOpen, onClose, visitorRequest, onApprove, onDeny }) => {if (!isOpen) return null;return (<div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-fade-in p-4"><div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-2xl border border-white/10 shadow-2xl scale-100 animate-scale-up"><div className="flex justify-between items-center mb-6"><h3 className="text-white font-bold flex items-center gap-2"><Shield size={18}/> Access Requests</h3><button onClick={onClose} className="text-slate-400 hover:text-white"><X size={18}/></button></div>{!visitorRequest ? (<div className="flex flex-col items-center py-10 text-slate-500 border-2 border-dashed border-white/5 rounded-xl"><Shield size={40} className="mb-4 opacity-20"/><p className="text-sm font-medium">No pending requests</p><p className="text-[10px] mt-2 text-slate-600">System active & listening...</p></div>) : (<div className="bg-[#0f172a] p-6 rounded-xl border border-red-500/30 flex flex-col gap-4 animate-slide-up ring-1 ring-red-500/20"><div className="flex items-center gap-4"><div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400"><User size={24}/></div><div><p className="text-lg font-bold text-white">New Visitor</p><p className="text-xs text-red-400 font-bold animate-pulse uppercase tracking-wider">Waiting for action...</p></div></div><div className="flex gap-3 mt-2"><button onClick={onDeny} className="flex-1 h-12 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold text-sm border border-red-500/20">Deny</button><button onClick={onApprove} className="flex-1 h-12 rounded-xl bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-all font-bold text-sm shadow-lg shadow-green-500/20">Approve Access</button></div></div>)}</div></div>)}
