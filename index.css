@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Pastikan tiada 'overflow: hidden' di sini! */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #020617; /* Warna gelap default */
+  overflow-x: hidden; /* Cuma hidden tepi, atas-bawah BOLEH scroll */
+}
+
+/* Custom Scrollbar (Optional - nampak cantik) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #10b981; /* Emerald-500 */
+  border-radius: 5px;
+}
